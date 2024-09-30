@@ -13,5 +13,8 @@ pub struct Velocity {
     pub dy: f32,
 }
 
+// #[derive(Component)]
+// pub struct Running(pub bool);  
+
 #[derive(Component)]
 pub struct Name(pub String);
