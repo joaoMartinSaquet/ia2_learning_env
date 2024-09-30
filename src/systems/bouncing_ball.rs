@@ -7,7 +7,8 @@ use bevy::color::palettes::basic::{RED, BLACK};
 use crate::components::env_component::{Velocity, Name};
 
 const BALL_RADIUS : f32 = 10.0;
-const ELASTIC_COEF : f32 = 1.0;
+const ELASTIC_COEF : f32 = 0.5;
+const ACCEL_TIME : f32 = 2.0;
 
 pub fn add_bouncing_ball(
     mut commands: Commands,
@@ -73,19 +74,20 @@ pub fn ball_dyn_handling(
     mut query: Query<(&mut Transform, &mut Velocity)>,
     time: Res<Time>
 ) {
-
+    let dt = time.delta_seconds()*ACCEL_TIME;
+    // println!("delta time {:?}", dt);
     for (mut transform, mut ball_velocity) in query.iter_mut() {
 
         let _x = transform.translation.x;
         let y = transform.translation.y;
         // println!("position of the ball {:?} {:?}", _x, y);
-        if y <= BALL_RADIUS/2.0 && ball_velocity.dy <= 0.0 {
+        if y <= BALL_RADIUS && ball_velocity.dy <= 0.0 {
             // println!("Ball hit on the ground with velovity {:?}", ball_velocity.dy);
             ball_velocity.dy = -ELASTIC_COEF*ball_velocity.dy;
             
         }else {
-            ball_velocity.dy = ball_velocity.dy - 9.81*time.delta_seconds();
+            ball_velocity.dy = ball_velocity.dy - 9.81*dt;
         }
-        transform.translation.y = transform.translation.y + ball_velocity.dy * time.delta_seconds();        
+        transform.translation.y = transform.translation.y + ball_velocity.dy * dt;        
     }
 }
