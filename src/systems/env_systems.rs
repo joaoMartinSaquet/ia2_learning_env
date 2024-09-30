@@ -1,63 +1,27 @@
+use core::f32;
+
 // use bevy::prelude::Color;
 // use bevy::prelude::Camera2dBundle;
 // use bevy::sprite::{MaterialMesh2dBundle, meshes::Circle, Mesh2dHandle};
 use bevy::prelude::*;
+use bevy::render::view::window;
 use bevy::sprite::MaterialMesh2dBundle;
 use bevy::color::palettes::basic::{RED, BLACK};
+use bevy::window::WindowWrapper;
 use crate::ressources::env_ressources::MoveTimer;
 use crate::components::env_component::{Velocity, Name};
 use crate::RunningState;
 
 const BALL_RADIUS : f32 = 10.0;
 const ELASTIC_COEF : f32 = 0.7;
-const ACCEL_TIME : f32 = 1.0;
+const ACCEL_TIME : f32 = 5.0;
+const T : f32 = 10.;
 
-pub fn add_bouncing_ball(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
-    // let c: Circle = Circle{radius:BALL_RADIUS};
-    // spawn ball to follow
-
-    // let ball = BallBundle::new(&mut meshes, &mut materials, Color::from(RED));
-    // println!("visibility {:?}", ball.visibility);
-    // commands.spawn( ball );  
-
-    commands.spawn((MaterialMesh2dBundle {
-        mesh: meshes.add(Circle::new(BALL_RADIUS)).into(),
-        material: materials.add(Color::from(RED)),
-        transform: Transform::from_xyz( 0.0,
-            100.0,
-            0.0,
-        ),
-        ..default()
-        }, 
-        Velocity {dx: 0.0, dy: -10.0},         Name("bouncing_ball".to_string() ) )
-
-    );
-    
-
-    // spawn the ground
-    commands.spawn(MaterialMesh2dBundle {
-        mesh: meshes.add(Rectangle::new(1000., 5.)).into(),
-        material: materials.add(Color::from(BLACK)),
-        transform: Transform::from_xyz(
-            0.0,
-            -5.0,
-            0.0,
-        ),
-        ..default()
-    });
-
-}
-
-pub fn spawn_env_camera(mut commands: bevy::prelude::Commands)
+pub fn spawn_env_camera(commands: &mut bevy::prelude::Commands)
 {
     commands
     .spawn(Camera2dBundle::default());// .insert(IA2learningEnvPlugin);
 }
-
 
 pub fn move_ball(
     mut query: Query<(&mut Transform, &Velocity)>,
@@ -100,7 +64,7 @@ pub fn ball_dyn_handling(
     }
 }
 
-pub fn command_desc_text(mut commands: bevy::prelude::Commands, asset_server: Res<AssetServer>){
+pub fn command_desc_text(commands: &mut bevy::prelude::Commands, asset_server: Res<AssetServer>){
     
     commands.spawn(
         // Create a TextBundle that has a Text with a single section.
@@ -123,4 +87,118 @@ pub fn command_desc_text(mut commands: bevy::prelude::Commands, asset_server: Re
             right: Val::Px(5.0),
             ..default()
         }));
+}
+
+pub fn setup_env(mut commands: bevy::prelude::Commands, 
+             asset_server: Res<AssetServer>,
+             mut meshes: ResMut<Assets<Mesh>>,
+             mut materials: ResMut<Assets<ColorMaterial>>,
+             windows: Query<&Window>)
+{
+    let window = windows.single();
+    
+    let width = window.width();
+    let y_obj = 200.0;
+
+    // spawn the object to follow, it s a ball
+    commands.spawn((MaterialMesh2dBundle {
+        mesh: meshes.add(Circle::new(BALL_RADIUS)).into(),
+        material: materials.add(Color::from(RED)),
+        transform: Transform::from_xyz( 0.,
+            y_obj,
+            0.0,
+        ),
+        ..default()
+        }, 
+        Velocity {dx: width/20.0, dy: 0.0},         Name("follow object".to_string() ) )
+
+    );
+
+    // spawn the players
+    commands.spawn((SpriteBundle {
+                                transform: Transform{ translation: Vec3 { x: 0.0, y: -y_obj, z: 0.0 }, scale : Vec3 { x: 0.3, y: 0.3, z: 1.0 }, ..default()},
+                                texture : asset_server.load("bevy_bird_dark.png"),
+                                ..default()}, 
+                            Name("player".to_string())));
+
+    spawn_env_camera(&mut commands);
+
+    command_desc_text(&mut commands, asset_server);
+    
+}
+
+pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &Name)>,
+                          time: Res<Time>,
+                          windows: Query<&Window>)
+{
+    // time elapsed
+    let window = windows.single();
+    let width = window.width();
+    println!("width {:?} ", window.size());
+    let rad_pulse = 2.0*f32::consts::PI* (1./T);
+
+    for (mut transform,mut vel, name) in query.iter_mut()
+    {
+        if name.0 == "follow object".to_string()
+        {
+            // cos traj
+            // transform.translation.x += dx_trajectory(time.elapsed().as_secs_f32(), time.delta_seconds(), rad_pulse, width);
+            
+            let x = transform.translation.x;
+            let vel_x = vel.dx;
+
+            if f32::abs(x) >= width/2.
+            {
+                vel.dx = -vel_x;
+            }
+            // perform the translation 
+
+            transform.translation.x += vel.dx * time.delta_seconds();
+            println!("ball position  {:?} ", transform.translation);
+        }
+    }
+
+    // println!("elapsed time {:?} ", );
+}
+
+pub fn setup_bouncing_ball(mut commands: bevy::prelude::Commands, 
+    asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,)
+{
+    let y_obj = 200.0;
+    commands.spawn((MaterialMesh2dBundle {
+        mesh: meshes.add(Circle::new(BALL_RADIUS)).into(),
+        material: materials.add(Color::from(RED)),
+        transform: Transform::from_xyz( 0.0,
+            y_obj,
+            0.0,
+        ),
+        ..default()
+        }, 
+        Velocity {dx: 0.0, dy: 0.0},         Name("bouncing_ball".to_string() ) )
+
+    );
+    
+
+    // spawn the ground
+    commands.spawn(MaterialMesh2dBundle {
+        mesh: meshes.add(Rectangle::new(1000., 5.)).into(),
+        material: materials.add(Color::from(BLACK)),
+        transform: Transform::from_xyz(
+            0.0,
+            -5.0,
+            0.0,
+        ),
+        ..default()
+    });
+
+    spawn_env_camera(&mut commands);
+
+    command_desc_text(&mut commands, asset_server);
+}
+
+fn dx_trajectory(t:f32, dt:f32, rad_pulse:f32, width:f32) -> f32
+{
+    rad_pulse*(width/2.0)*f32::cos(rad_pulse*(t - 0.0*T/2.0))*dt
 }
