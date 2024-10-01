@@ -15,8 +15,10 @@ pub fn toggle_run_pause(mut keyboard_input_events: EventReader<KeyboardInput>,
         if event.state == ButtonState::Pressed {
             if event.key_code == KeyCode::KeyS {
                 match state.get() {
-                    RunningState::Paused => next_state.set(RunningState::Running),
+                    RunningState::Start => next_state.set(RunningState::Running),
                     RunningState::Running => next_state.set(RunningState::Paused),
+                    RunningState::Paused => next_state.set(RunningState::End),
+                    RunningState::End => next_state.set(RunningState::Start),
                 }
             }
         }

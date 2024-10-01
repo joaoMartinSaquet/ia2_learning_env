@@ -1,16 +1,13 @@
 use core::f32;
-
+use bevy::color::palettes::css::GOLD;
 use bevy::ecs::query;
 // use bevy::prelude::Color;
 // use bevy::prelude::Camera2dBundle;
 // use bevy::sprite::{MaterialMesh2dBundle, meshes::Circle, Mesh2dHandle};
 use bevy::prelude::*;
-use bevy::render::view::window;
 use bevy::sprite::MaterialMesh2dBundle;
-use bevy::color::palettes::basic::{RED, BLACK};
-use bevy::window::WindowWrapper;
-use crate::ressources::env_ressources::MoveTimer;
-use crate::components::env_component::{Velocity, Name};
+use bevy::color::palettes::basic::{RED, BLACK, GREEN};
+use crate::components::env_component::*;
 use crate::RunningState;
 use bevy::input::mouse::MouseMotion;
 
@@ -77,7 +74,7 @@ pub fn command_desc_text(commands: &mut bevy::prelude::Commands, asset_server: R
             TextStyle {
                 // This font is loaded and will be used instead of the default font.
                 font: asset_server.load("fonts/FiraSans-Thin.ttf"),
-                font_size: 50.0,
+                font_size: 25.0,
                 color : Color::BLACK,
                 ..default()
             },
@@ -101,6 +98,7 @@ pub fn setup_env(mut commands: bevy::prelude::Commands,
     let window = windows.single();
     
     let width = window.width();
+    let height = window.height();
     let y_obj = 200.0;
 
     // spawn the object to follow, it s a ball
@@ -113,24 +111,54 @@ pub fn setup_env(mut commands: bevy::prelude::Commands,
         ),
         ..default()
         }, 
-        Velocity {dx: width/2.0, dy: 0.0},         Name("follow object".to_string() ) )
+        Velocity {dx: width, dy: 0.0},         
+        NameComponent("follow object".to_string() ) )
 
     );
 
     // spawn the players
     commands.spawn((SpriteBundle {
                                 transform: Transform{ translation: Vec3 { x: 0.0, y: -y_obj, z: 0.0 }, scale : Vec3 { x: 0.3, y: 0.3, z: 1.0 }, ..default()},
-                                texture : asset_server.load("bevy_bird_dark.png"),
+                                texture : asset_server.load("./player/player.jpg"),
                                 ..default()}, 
-                            Name("player".to_string())));
+                            NameComponent("player".to_string())));
 
     spawn_env_camera(&mut commands);
 
+ 
+    // spawn score text 
+    commands.spawn((
+        // Create a TextBundle that has a Text with a list of sections.
+        TextBundle::from_sections([
+            TextSection::new(
+                "Score: ",
+                TextStyle {
+                    // This font is loaded and will be used instead of the default font.
+                    font: asset_server.load("fonts/FiraSans-Medium.ttf"),
+                    font_size: 50.0,
+                    color: Color::from(RED),
+                    ..default()
+                },
+            ),
+            TextSection::from_style(
+                // "default_font" feature is unavailable, load a font to use instead.
+                TextStyle {
+                    font: asset_server.load("fonts/FiraSans-Medium.ttf"),
+                    font_size: 60.0,
+                    color: Color::from(RED),
+                    ..default()})
+
+        ]),
+        ScoreTxt,
+    ));
+
     command_desc_text(&mut commands, asset_server);
+
+    commands.spawn((CumScore(0.0), NameComponent("cum_score".to_string())));
     
 }
 
-pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &Name)>,
+pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComponent)>,
                           time: Res<Time>,
                           windows: Query<&Window>)
 {
@@ -179,7 +207,7 @@ pub fn setup_bouncing_ball(mut commands: bevy::prelude::Commands,
         ),
         ..default()
         }, 
-        Velocity {dx: 0.0, dy: 0.0},         Name("bouncing_ball".to_string() ) )
+        Velocity {dx: 0.0, dy: 0.0},         NameComponent("bouncing_ball".to_string() ) )
 
     );
     
@@ -208,17 +236,63 @@ fn dx_trajectory(t:f32, dt:f32, rad_pulse:f32, width:f32) -> f32
 
 /// This system prints out all keyboard events as they come in
 pub fn mouse_control(mut mouse_motion: EventReader<MouseMotion>,
-                     mut query: Query<(&mut Transform, &Name)>,)
+                     mut query: Query<(&mut Transform, &NameComponent)>,)
 {   
     for (mut transform, name) in query.iter_mut()
     {
         if name.0 == "player".to_string()
         {   
             for ev in mouse_motion.read() {
-                println!("Mouse moved: X: {} px, Y: {} px", ev.delta.x, ev.delta.y);
+                // println!("Mouse moved: X: {} px, Y: {} px", ev.delta.x, ev.delta.y);
                 transform.translation.x += ev.delta.x;
-                transform.translation.y += ev.delta.y;
+                // transform.translation.y += ev.delta.y;
             }
         }
+    }
+}
+
+pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
+                    mut query_text: Query<&mut Text, With<ScoreTxt>>,
+                    mut cumscore : Query<&mut CumScore>)
+{
+
+    let mut x_player = 0.0;
+    let mut x_folow = 0.0;
+
+    for (transform, name) in query.iter()
+    {
+        if name.0 == "follow object".to_string()
+        {
+            x_folow = transform.translation.x;
+        }
+        if name.0 == "player".to_string()
+        {
+            x_player = transform.translation.x;
+        }        
+    }   
+
+    // + eps to avoid division by zero
+    // let score = 1./(f32::abs(x_folow - x_player) + 0.01);
+
+    let score = f32::exp(-f32::abs(x_folow - x_player));
+    for mut text in query_text.iter_mut()
+    {
+        text.sections[1].value = format!("{score:.2}");
+        // println!("score {:?}", score);
+    }
+    
+    for mut cumscore in cumscore.iter_mut()
+    {
+        // println!("cum score {:?}", cumscore.0);
+        cumscore.0 += score;
+    }
+    
+}
+
+pub fn displays_cum_score(query: Query<(&CumScore, &NameComponent)>,)
+{
+    for (cum_score, _name) in query.iter()
+    {
+        println!("total score is : {:?}", cum_score.0)
     }
 }

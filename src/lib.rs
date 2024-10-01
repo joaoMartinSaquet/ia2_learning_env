@@ -4,7 +4,7 @@ pub mod ressources;
 
 use ressources::env_ressources::MoveTimer;
 use systems::{env_systems::*, state_handling::toggle_run_pause};
-use bevy::prelude::*;
+use bevy::{ecs::schedule, prelude::*};
 
 // dt of the move timer every 0.05 seconds
 const MOVE_DT : f32 = 0.005;
@@ -12,8 +12,10 @@ const MOVE_DT : f32 = 0.005;
 #[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum RunningState {
     #[default]
-    Paused,
+    Start,
     Running,
+    End,
+    Paused,
 }
 
 #[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
@@ -56,7 +58,9 @@ impl Plugin for LearningEnv
            .add_systems(Startup, setup_env)
            .add_systems(Update, toggle_run_pause)
            .add_systems(FixedUpdate, (run_trajectory).run_if(in_state(RunningState::Running)))
-           .add_systems(FixedUpdate, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)));
+           .add_systems(FixedUpdate, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)))
+           .add_systems(FixedUpdate, score_metric.run_if(in_state(RunningState::Running)))
+           .add_systems(OnEnter(RunningState::End), displays_cum_score);
     }
 }
 

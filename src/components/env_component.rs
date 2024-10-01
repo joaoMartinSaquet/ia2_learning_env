@@ -17,4 +17,13 @@ pub struct Velocity {
 // pub struct Running(pub bool);  
 
 #[derive(Component)]
-pub struct Name(pub String);
+pub struct NameComponent(pub String);
+
+#[derive(Component)]
+pub struct ScoreTxt;
+
+#[derive(Component)]
+pub struct CumScore(pub f32);
+
+#[derive(Component)]
+pub struct TimeTracker(pub f32);
