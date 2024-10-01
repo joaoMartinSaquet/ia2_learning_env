@@ -119,7 +119,7 @@ pub fn setup_env(mut commands: bevy::prelude::Commands,
     // spawn the players
     commands.spawn((SpriteBundle {
                                 transform: Transform{ translation: Vec3 { x: 0.0, y: -y_obj, z: 0.0 }, scale : Vec3 { x: 0.3, y: 0.3, z: 1.0 }, ..default()},
-                                texture : asset_server.load("./player/player.jpg"),
+                                texture : asset_server.load("./player/player.png"),
                                 ..default()}, 
                             NameComponent("player".to_string())));
 
