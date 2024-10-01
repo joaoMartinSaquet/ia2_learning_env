@@ -1,5 +1,6 @@
 use core::f32;
 
+use bevy::ecs::query;
 // use bevy::prelude::Color;
 // use bevy::prelude::Camera2dBundle;
 // use bevy::sprite::{MaterialMesh2dBundle, meshes::Circle, Mesh2dHandle};
@@ -11,6 +12,8 @@ use bevy::window::WindowWrapper;
 use crate::ressources::env_ressources::MoveTimer;
 use crate::components::env_component::{Velocity, Name};
 use crate::RunningState;
+use bevy::input::mouse::MouseMotion;
+
 
 const BALL_RADIUS : f32 = 10.0;
 const ELASTIC_COEF : f32 = 0.7;
@@ -110,7 +113,7 @@ pub fn setup_env(mut commands: bevy::prelude::Commands,
         ),
         ..default()
         }, 
-        Velocity {dx: width/20.0, dy: 0.0},         Name("follow object".to_string() ) )
+        Velocity {dx: width/2.0, dy: 0.0},         Name("follow object".to_string() ) )
 
     );
 
@@ -134,7 +137,7 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &Name)>,
     // time elapsed
     let window = windows.single();
     let width = window.width();
-    println!("width {:?} ", window.size());
+    // println!("width {:?} ", window.size());
     let rad_pulse = 2.0*f32::consts::PI* (1./T);
 
     for (mut transform,mut vel, name) in query.iter_mut()
@@ -154,7 +157,7 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &Name)>,
             // perform the translation 
 
             transform.translation.x += vel.dx * time.delta_seconds();
-            println!("ball position  {:?} ", transform.translation);
+            // println!("ball position  {:?} ", transform.translation);
         }
     }
 
@@ -201,4 +204,21 @@ pub fn setup_bouncing_ball(mut commands: bevy::prelude::Commands,
 fn dx_trajectory(t:f32, dt:f32, rad_pulse:f32, width:f32) -> f32
 {
     rad_pulse*(width/2.0)*f32::cos(rad_pulse*(t - 0.0*T/2.0))*dt
+}
+
+/// This system prints out all keyboard events as they come in
+pub fn mouse_control(mut mouse_motion: EventReader<MouseMotion>,
+                     mut query: Query<(&mut Transform, &Name)>,)
+{   
+    for (mut transform, name) in query.iter_mut()
+    {
+        if name.0 == "player".to_string()
+        {   
+            for ev in mouse_motion.read() {
+                println!("Mouse moved: X: {} px, Y: {} px", ev.delta.x, ev.delta.y);
+                transform.translation.x += ev.delta.x;
+                transform.translation.y += ev.delta.y;
+            }
+        }
+    }
 }

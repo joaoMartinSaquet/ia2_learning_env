@@ -16,6 +16,21 @@ pub enum RunningState {
     Running,
 }
 
+#[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
+pub enum ControllerState {
+    #[default]
+    Mouse,
+    Running,
+}
+
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+enum MyInputKindSet {
+    Touch,
+    Mouse,
+    Gamepad,
+}
+
+
 pub struct BounceBall;
 impl Plugin for BounceBall {
     fn build(&self, app: &mut App) {
@@ -24,8 +39,7 @@ impl Plugin for BounceBall {
             .init_state::<RunningState>()
             .add_systems(Startup,setup_bouncing_ball)
             .insert_resource(MoveTimer(Timer::from_seconds(MOVE_DT, TimerMode::Repeating)))
-            .add_systems(FixedUpdate, (ball_dyn_handling).run_if(in_state(RunningState::Running)))
-            .add_systems(Update, toggle_run_pause);
+            .add_systems(FixedUpdate, (ball_dyn_handling).run_if(in_state(RunningState::Running)));
             
     }
 }
@@ -37,9 +51,12 @@ impl Plugin for LearningEnv
         app.insert_resource(ClearColor(Color::srgb(1.0, 1.0,1.0)))
            .insert_resource(Time::<Fixed>::from_seconds(0.0001))
            .init_state::<RunningState>()
+           .init_state::<ControllerState>()
+        //    .configure_sets(Update, (ControlSet.run_if))
            .add_systems(Startup, setup_env)
            .add_systems(Update, toggle_run_pause)
-           .add_systems(FixedUpdate, (run_trajectory).run_if(in_state(RunningState::Running)));
-            
+           .add_systems(FixedUpdate, (run_trajectory).run_if(in_state(RunningState::Running)))
+           .add_systems(FixedUpdate, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)));
     }
 }
+
