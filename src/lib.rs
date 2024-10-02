@@ -4,7 +4,7 @@ pub mod ressources;
 
 use ressources::env_ressources::{EpisodeTimer, MoveTimer};
 use systems::{env_systems::*, state_handling::{episodes_ends, toggle_run_pause}};
-use bevy::{ecs::schedule, prelude::*};
+use bevy::prelude::*;
 
 // dt of the move timer every 0.05 seconds
 const MOVE_DT : f32 = 0.005;
@@ -28,12 +28,12 @@ pub enum ControllerState {
     Running,
 }
 
-#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
-enum MyInputKindSet {
-    Touch,
-    Mouse,
-    Gamepad,
-}
+// #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+// enum MyInputKindSet {
+//     Touch,
+//     Mouse,
+//     Gamepad,
+// }
 
 
 pub struct BounceBall;

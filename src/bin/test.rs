@@ -1,143 +1,59 @@
-//! This example illustrates how to create UI text and update it in a system.
-//!
-//! It displays the current FPS in the top left corner, as well as text that changes color
-//! in the bottom right. For text within a scene, please see the text2d example.
-
-use bevy::{
-    color::palettes::css::GOLD,
-    diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin},
-    prelude::*,
-};
+use bevy::prelude::*;
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, FrameTimeDiagnosticsPlugin))
+        .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
-        .add_systems(Update, (text_update_system, text_color_system))
+        .add_systems(Update, animate_materials)
         .run();
 }
 
-// A unit struct to help identify the FPS UI component, since there may be many Text components
-#[derive(Component)]
-struct FpsText;
-
-// A unit struct to help identify the color-changing Text component
-#[derive(Component)]
-struct ColorText;
-
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // UI camera
-    commands.spawn(Camera2dBundle::default());
-    // Text with one section
+fn setup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     commands.spawn((
-        // Create a TextBundle that has a Text with a single section.
-        TextBundle::from_section(
-            // Accepts a `String` or any type that converts into a `String`, such as `&str`
-            "hello\nbevy!",
-            TextStyle {
-                // This font is loaded and will be used instead of the default font.
-                font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                font_size: 100.0,
-                ..default()
-            },
-        ) // Set the justification of the Text
-        .with_text_justify(JustifyText::Center)
-        // Set the style of the TextBundle itself.
-        .with_style(Style {
-            position_type: PositionType::Absolute,
-            bottom: Val::Px(5.0),
-            right: Val::Px(5.0),
+        Camera3dBundle {
+            transform: Transform::from_xyz(3.0, 1.0, 3.0)
+                .looking_at(Vec3::new(0.0, -0.5, 0.0), Vec3::Y),
             ..default()
-        }),
-        ColorText,
+        },
+        EnvironmentMapLight {
+            diffuse_map: asset_server.load("environment_maps/pisa_diffuse_rgb9e5_zstd.ktx2"),
+            specular_map: asset_server.load("environment_maps/pisa_specular_rgb9e5_zstd.ktx2"),
+            intensity: 2_000.0,
+        },
     ));
 
-    // Text with multiple sections
-    commands.spawn((
-        // Create a TextBundle that has a Text with a list of sections.
-        TextBundle::from_sections([
-            TextSection::new(
-                "FPS: ",
-                TextStyle {
-                    // This font is loaded and will be used instead of the default font.
-                    font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                    font_size: 60.0,
-                    ..default()
-                },
-            ),
-            TextSection::from_style(if cfg!(feature = "default_font") {
-                TextStyle {
-                    font_size: 60.0,
-                    color: GOLD.into(),
-                    // If no font is specified, the default font (a minimal subset of FiraMono) will be used.
-                    ..default()
-                }
-            } else {
-                // "default_font" feature is unavailable, load a font to use instead.
-                TextStyle {
-                    font: asset_server.load("fonts/FiraSans-Medium.ttf"),
-                    font_size: 60.0,
-                    color: GOLD.into(),
-                }
-            }),
-        ]),
-        FpsText,
-    ));
+    let cube = meshes.add(Cuboid::new(0.5, 0.5, 0.5));
 
-    #[cfg(feature = "default_font")]
-    commands.spawn(
-        // Here we are able to call the `From` method instead of creating a new `TextSection`.
-        // This will use the default font (a minimal subset of FiraMono) and apply the default styling.
-        TextBundle::from("From an &str into a TextBundle with the default font!").with_style(
-            Style {
-                position_type: PositionType::Absolute,
-                bottom: Val::Px(5.0),
-                left: Val::Px(15.0),
+    const GOLDEN_ANGLE: f32 = 137.507_77;
+
+    let mut hsla = Hsla::hsl(0.0, 1.0, 0.5);
+    for x in -1..2 {
+        for z in -1..2 {
+            commands.spawn(PbrBundle {
+                mesh: cube.clone(),
+                material: materials.add(Color::from(hsla)),
+                transform: Transform::from_translation(Vec3::new(x as f32, 0.0, z as f32)),
                 ..default()
-            },
-        ),
-    );
-
-    #[cfg(not(feature = "default_font"))]
-    commands.spawn(
-        TextBundle::from_section(
-            "Default font disabled",
-            TextStyle {
-                font: asset_server.load("fonts/FiraMono-Medium.ttf"),
-                ..default()
-            },
-        )
-        .with_style(Style {
-            position_type: PositionType::Absolute,
-            bottom: Val::Px(5.0),
-            left: Val::Px(15.0),
-            ..default()
-        }),
-    );
-}
-
-fn text_color_system(time: Res<Time>, mut query: Query<&mut Text, With<ColorText>>) {
-    for mut text in &mut query {
-        let seconds = time.elapsed_seconds();
-
-        // Update the color of the first and only section.
-        text.sections[0].style.color = Color::srgb(
-            (1.25 * seconds).sin() / 2.0 + 0.5,
-            (0.75 * seconds).sin() / 2.0 + 0.5,
-            (0.50 * seconds).sin() / 2.0 + 0.5,
-        );
+            });
+            hsla = hsla.rotate_hue(GOLDEN_ANGLE);
+        }
     }
 }
 
-fn text_update_system(
-    diagnostics: Res<DiagnosticsStore>,
-    mut query: Query<&mut Text, With<FpsText>>,
+fn animate_materials(
+    material_handles: Query<&Handle<StandardMaterial>>,
+    time: Res<Time>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    for mut text in &mut query {
-        if let Some(fps) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {
-            if let Some(value) = fps.smoothed() {
-                // Update the value of the second section
-                text.sections[1].value = format!("{value:.2}");
+    for material_handle in material_handles.iter() {
+        if let Some(material) = materials.get_mut(material_handle) {
+            if let Color::Hsla(ref mut hsla) = material.base_color {
+                *hsla = hsla.rotate_hue(time.delta_seconds() * 100.0);
             }
         }
     }

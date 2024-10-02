@@ -1,15 +1,9 @@
 use core::f32;
-use bevy::color::palettes::css::{GOLD, WHITE};
-use bevy::ecs::query;
-// use bevy::prelude::Color;
-// use bevy::prelude::Camera2dBundle;
-// use bevy::sprite::{MaterialMesh2dBundle, meshes::Circle, Mesh2dHandle};
+use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
-use bevy::color::palettes::basic::{RED, BLACK, GREEN};
+use bevy::color::palettes::basic::{RED, BLACK};
 use crate::components::env_component::*;
-use crate::ressources::env_ressources::EpisodeTimer;
-use crate::RunningState;
 use bevy::input::mouse::MouseMotion;
 
 
@@ -40,7 +34,6 @@ pub fn move_ball(
 pub fn ball_dyn_handling(
     mut query: Query<(&mut Transform, &mut Velocity)>,
     time: Res<Time>,
-    state: Res<State<RunningState>>
 ) {
 
     // println!("Running state: {:?}", state.get());
@@ -99,7 +92,7 @@ pub fn setup_env(mut commands: bevy::prelude::Commands,
     let window = windows.single();
     
     let width = window.width();
-    let height = window.height();
+    let _height = window.height();
     let y_obj = 200.0;
 
     // spawn the background first to not overwrite 
@@ -176,7 +169,7 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
     let window = windows.single();
     let width = window.width();
     // println!("width {:?} ", window.size());
-    let rad_pulse = 2.0*f32::consts::PI* (1./T);
+    let _rad_pulse = 2.0*f32::consts::PI* (1./T);
 
     for (mut transform,mut vel, name) in query.iter_mut()
     {
@@ -239,10 +232,10 @@ pub fn setup_bouncing_ball(mut commands: bevy::prelude::Commands,
     command_desc_text(&mut commands, asset_server);
 }
 
-fn dx_trajectory(t:f32, dt:f32, rad_pulse:f32, width:f32) -> f32
-{
-    rad_pulse*(width/2.0)*f32::cos(rad_pulse*(t - 0.0*T/2.0))*dt
-}
+// // fn dx_trajectory(t:f32, dt:f32, rad_pulse:f32, width:f32) -> f32
+// // {
+//     rad_pulse*(width/2.0)*f32::cos(rad_pulse*(t - 0.0*T/2.0))*dt
+// }
 
 /// This system prints out all keyboard events as they come in
 pub fn mouse_control(mut mouse_motion: EventReader<MouseMotion>,
