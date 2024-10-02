@@ -17,22 +17,4 @@
 - [ ] pub sub
 
 ## 📝 Notes
-- State machine of RunningState : 
-```mermaid
-stateDiagram-v2
-    [*] --> Started : s
-    Started --> Running : s
-    Running --> Paused : s
-    Paused --> End : s
-    End --> Started : s
-```
-wanted StateMachine
-```mermaid
-stateDiagram-v2
-    [*] --> Started : s
-    Started --> Running : s
-    Running --> Paused : s
-    Paused --> Running : s
-    Paused --> End : e
-    End --> Started : r
-```
+
