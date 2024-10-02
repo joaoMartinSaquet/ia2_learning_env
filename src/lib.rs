@@ -2,12 +2,15 @@ pub mod components;
 pub mod systems;
 pub mod ressources;
 
-use ressources::env_ressources::MoveTimer;
-use systems::{env_systems::*, state_handling::toggle_run_pause};
+use ressources::env_ressources::{EpisodeTimer, MoveTimer};
+use systems::{env_systems::*, state_handling::{episodes_ends, toggle_run_pause}};
 use bevy::{ecs::schedule, prelude::*};
 
 // dt of the move timer every 0.05 seconds
 const MOVE_DT : f32 = 0.005;
+
+// episodes duration
+const EPISODE_DURATION : f32  = 10.0;
 
 #[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum RunningState {
@@ -52,6 +55,7 @@ impl Plugin for LearningEnv
     fn build(&self, app: &mut App) {
         app.insert_resource(ClearColor(Color::srgb(1.0, 1.0,1.0)))
            .insert_resource(Time::<Fixed>::from_seconds(0.0001))
+           .insert_resource(EpisodeTimer(Timer::from_seconds(EPISODE_DURATION, TimerMode::Once)))
            .init_state::<RunningState>()
            .init_state::<ControllerState>()
         //    .configure_sets(Update, (ControlSet.run_if))
@@ -60,7 +64,9 @@ impl Plugin for LearningEnv
            .add_systems(FixedUpdate, (run_trajectory).run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, score_metric.run_if(in_state(RunningState::Running)))
+           .add_systems(Update, episodes_ends)
            .add_systems(OnEnter(RunningState::Ended), displays_cum_score);
+    
     }
 }
 

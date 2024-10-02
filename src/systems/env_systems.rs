@@ -8,6 +8,7 @@ use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 use bevy::color::palettes::basic::{RED, BLACK, GREEN};
 use crate::components::env_component::*;
+use crate::ressources::env_ressources::EpisodeTimer;
 use crate::RunningState;
 use bevy::input::mouse::MouseMotion;
 
@@ -274,7 +275,7 @@ pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
     // + eps to avoid division by zero
     // let score = 1./(f32::abs(x_folow - x_player) + 0.01);
 
-    let score = f32::exp(-f32::abs(x_folow - x_player));
+    let score = f32::exp(-(x_folow - x_player).powi(2));
     for mut text in query_text.iter_mut()
     {
         text.sections[1].value = format!("{score:.2}");
@@ -296,3 +297,5 @@ pub fn displays_cum_score(query: Query<(&CumScore, &NameComponent)>,)
         println!("total score is : {:?}", cum_score.0)
     }
 }
+
+

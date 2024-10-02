@@ -1,7 +1,8 @@
 use bevy::prelude::EventReader;
 use bevy::input::keyboard::{KeyboardInput, KeyCode};
-use bevy::prelude::{Res, ResMut, State, NextState};
+use bevy::prelude::{Res, ResMut, State, NextState, Time};
 use bevy::input::ButtonState;
+use crate::ressources::env_ressources::EpisodeTimer;
 use crate::RunningState;
 
 
@@ -31,4 +32,17 @@ pub fn toggle_run_pause(mut keyboard_input_events: EventReader<KeyboardInput>,
     }
 }
 
+pub fn episodes_ends(state: Res<State<RunningState>>,
+                     mut next_state: ResMut<NextState<RunningState>>,
+                     time: Res<Time>,
+                     mut episode_timer : ResMut<EpisodeTimer>)
+{
+    if *state.get() == RunningState::Running { 
+        // println!("episode timer {:?}", episode_timer.0);
+        episode_timer.0.tick(time.delta());
+    }
 
+    if episode_timer.0.finished() {
+        next_state.set(RunningState::Ended);
+    }
+}
