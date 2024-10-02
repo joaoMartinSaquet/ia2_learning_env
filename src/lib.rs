@@ -12,9 +12,9 @@ const MOVE_DT : f32 = 0.005;
 #[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum RunningState {
     #[default]
-    Start,
+    Started,
     Running,
-    End,
+    Ended,
     Paused,
 }
 
@@ -60,7 +60,7 @@ impl Plugin for LearningEnv
            .add_systems(FixedUpdate, (run_trajectory).run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, score_metric.run_if(in_state(RunningState::Running)))
-           .add_systems(OnEnter(RunningState::End), displays_cum_score);
+           .add_systems(OnEnter(RunningState::Ended), displays_cum_score);
     }
 }
 

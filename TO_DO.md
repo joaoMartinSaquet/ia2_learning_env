@@ -13,6 +13,8 @@
 - [ ] fix score seems too big
 - [ ] fix state machine
 - [ ] tune the score metrics, maybe change it 
+- [ ] control the player using an another softwares ( décision from a python that send commands to the game)
+- [ ] pub sub
 
 ## 📝 Notes
 - State machine of RunningState : 
