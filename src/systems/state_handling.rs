@@ -12,8 +12,11 @@ pub fn toggle_run_pause(mut keyboard_input_events: EventReader<KeyboardInput>,
                     state: Res<State<RunningState>>,
                     mut next_state: ResMut<NextState<RunningState>>) {
 
+   
     for event in keyboard_input_events.read() {
         if event.state == ButtonState::Pressed {
+            // println!("state {:?}", state.get());
+            // println!("{:?}", event);
             if event.key_code == KeyCode::KeyS {
                 match state.get() {
                     RunningState::Running => next_state.set(RunningState::Paused),
@@ -22,10 +25,12 @@ pub fn toggle_run_pause(mut keyboard_input_events: EventReader<KeyboardInput>,
                     _ => ()
                 }
             }
+            // println!("restart condition {:?} ",event.key_code == KeyCode::KeyR && *state.get() == RunningState::Ended);
             if event.key_code == KeyCode::KeyR && *state.get() == RunningState::Ended {
+                println!("changing state ");
                 next_state.set(RunningState::Started);
             }
-            if event.key_code == KeyCode::KeyE && *state.get() == RunningState::Paused {
+            else if event.key_code == KeyCode::KeyE && *state.get() == RunningState::Paused {
                 next_state.set(RunningState::Ended);
             }
         }
@@ -42,7 +47,7 @@ pub fn episodes_ends(state: Res<State<RunningState>>,
         episode_timer.0.tick(time.delta());
     }
 
-    if episode_timer.0.finished() {
+    if episode_timer.0.just_finished() && *state.get() == RunningState::Running {
         next_state.set(RunningState::Ended);
     }
 }

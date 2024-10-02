@@ -1,5 +1,6 @@
 use core::f32;
 use bevy::color::palettes::css::WHITE;
+use bevy::ecs::query;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 use bevy::color::palettes::basic::{RED, BLACK};
@@ -303,4 +304,17 @@ pub fn displays_cum_score(query: Query<(&CumScore, &NameComponent)>,)
     }
 }
 
+// pub fn restart(mut commands: bevy::prelude::Commands, 
+//                asset_server: Res<AssetServer>,
+//                mut meshes: ResMut<Assets<Mesh>>,
+//                mut materials: ResMut<Assets<ColorMaterial>>,
+//                entity_query: Query<Entity>,
+//                windows: Query<&Window>)
+// {
+    
+//     for entity in entity_query.iter()
+//     {
+//         commands.entity(entity).despawn_recursive();   
+//     }   
 
+// }

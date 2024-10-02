@@ -55,7 +55,7 @@ impl Plugin for LearningEnv
     fn build(&self, app: &mut App) {
         app.insert_resource(ClearColor(Color::srgb(1.0, 1.0,1.0)))
            .insert_resource(Time::<Fixed>::from_seconds(0.01))
-           .insert_resource(EpisodeTimer(Timer::from_seconds(EPISODE_DURATION, TimerMode::Once)))
+           .insert_resource(EpisodeTimer(Timer::from_seconds(EPISODE_DURATION, TimerMode::Repeating)))
            .init_state::<RunningState>()
            .init_state::<ControllerState>()
         //    .configure_sets(Update, (ControlSet.run_if))
