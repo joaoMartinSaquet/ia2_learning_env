@@ -1,9 +1,19 @@
-# ia2 learning env
-## principe of the games and usages
+# IA2 Learning Environment
 
-This little games, is a 1-D games where the players the ("bird") need to follow the red ball, closer the player is to the ball, more he score point. the idea of this is to collect data from the controller and the game to constuct a ML algorithm that learn to help an user in the 1D mouse displacement
-# summary
+## Principle of the Game and Usage
+
+This is a simple 1D game where the player, represented as the "bird", must follow a red ball. The closer the player is to the ball, the more points they score. The main idea behind this game is to collect data from the controller and the game environment to build a machine learning (ML) algorithm that learns to assist the user in 1D mouse displacement.
+
+## Usage
+
+- **Start the game**: Press **"s"** to start.
+- **Pause the game**: Press **"s"** to pause.
+- **End the game**: Once paused, press **"e"** to end.
+- **Restart the game**: In the ended mode, press **"r"** to restart.
+
+## Summary
+
 - [ECS](./doc/ECS.md)
 - [Setup Guide](./doc/setup.md)
 - [TODO](./doc/TO_DO.md)
-- [Games Basic](./doc/docs_1D.md)
+- [Game Basics](./doc/docs_1D.md)

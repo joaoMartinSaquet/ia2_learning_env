@@ -1,5 +1,5 @@
 use core::f32;
-use bevy::color::palettes::css::GOLD;
+use bevy::color::palettes::css::{GOLD, WHITE};
 use bevy::ecs::query;
 // use bevy::prelude::Color;
 // use bevy::prelude::Camera2dBundle;
@@ -74,9 +74,9 @@ pub fn command_desc_text(commands: &mut bevy::prelude::Commands, asset_server: R
             "To run / pause the sim, press {s}",
             TextStyle {
                 // This font is loaded and will be used instead of the default font.
-                font: asset_server.load("fonts/FiraSans-Thin.ttf"),
+                font: asset_server.load("fonts/FiraSans-Medium.ttf"),
                 font_size: 25.0,
-                color : Color::BLACK,
+                color : Color::WHITE,
                 ..default()
             },
         ) // Set the justification of the Text
@@ -102,13 +102,20 @@ pub fn setup_env(mut commands: bevy::prelude::Commands,
     let height = window.height();
     let y_obj = 200.0;
 
+    // spawn the background first to not overwrite 
+    commands.spawn(SpriteBundle {
+        transform: Transform{ translation: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, scale : Vec3 { x: 0.3, y: 0.3, z: 1.0 }, ..default()},
+        texture : asset_server.load("./background/background.png"),
+        ..default()});
+
+
     // spawn the object to follow, it s a ball
     commands.spawn((MaterialMesh2dBundle {
         mesh: meshes.add(Circle::new(BALL_RADIUS)).into(),
         material: materials.add(Color::from(RED)),
         transform: Transform::from_xyz( 0.,
             y_obj,
-            0.0,
+            1.0,
         ),
         ..default()
         }, 
@@ -119,7 +126,7 @@ pub fn setup_env(mut commands: bevy::prelude::Commands,
 
     // spawn the players
     commands.spawn((SpriteBundle {
-                                transform: Transform{ translation: Vec3 { x: 0.0, y: -y_obj, z: 0.0 }, scale : Vec3 { x: 0.3, y: 0.3, z: 1.0 }, ..default()},
+                                transform: Transform{ translation: Vec3 { x: 0.0, y: -y_obj, z: 1.0 }, scale : Vec3 { x: 0.3, y: 0.3, z: 1.0 }, ..default()},
                                 texture : asset_server.load("./player/player.png"),
                                 ..default()}, 
                             NameComponent("player".to_string())));
@@ -137,7 +144,7 @@ pub fn setup_env(mut commands: bevy::prelude::Commands,
                     // This font is loaded and will be used instead of the default font.
                     font: asset_server.load("fonts/FiraSans-Medium.ttf"),
                     font_size: 50.0,
-                    color: Color::from(RED),
+                    color: Color::from(WHITE),
                     ..default()
                 },
             ),
@@ -146,16 +153,18 @@ pub fn setup_env(mut commands: bevy::prelude::Commands,
                 TextStyle {
                     font: asset_server.load("fonts/FiraSans-Medium.ttf"),
                     font_size: 60.0,
-                    color: Color::from(RED),
+                    color: Color::from(WHITE),
                     ..default()})
 
         ]),
         ScoreTxt,
     ));
 
-    command_desc_text(&mut commands, asset_server);
-
     commands.spawn((CumScore(0.0), NameComponent("cum_score".to_string())));
+
+
+
+    command_desc_text(&mut commands, asset_server);
     
 }
 
@@ -276,16 +285,19 @@ pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
     // let score = 1./(f32::abs(x_folow - x_player) + 0.01);
 
     let score = f32::exp(-(x_folow - x_player).powi(2));
-    for mut text in query_text.iter_mut()
-    {
-        text.sections[1].value = format!("{score:.2}");
-        // println!("score {:?}", score);
-    }
-    
+    println!("score {:?} ", score);
+    let mut disp_score = 0.0;
     for mut cumscore in cumscore.iter_mut()
     {
         // println!("cum score {:?}", cumscore.0);
         cumscore.0 += score;
+        disp_score = cumscore.0;
+    }
+    
+    for mut text in query_text.iter_mut()
+    {
+        text.sections[1].value = format!("{disp_score:.2}");
+        // println!("score {:?}", score);
     }
     
 }
