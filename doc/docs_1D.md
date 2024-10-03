@@ -25,7 +25,6 @@ There are four key events that trigger state transitions:
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Started : s
     Started --> Running : s
     Running --> Paused : s
     Paused --> Running : s
