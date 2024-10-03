@@ -15,7 +15,7 @@ This is a simple 1D game where the player, represented as the "bird", must follo
 To set up the learning environment, ensure you have the following:
 - Rust: Version 1.81.0
   - Follow the installation instructions from the official Rust page: Rust Installation Guide
--Bevy: Version 0.9.0
+- Bevy: Version 0.9.0
   - Follow the setup guide for Bevy from the official site: Bevy Quick Start Guide
 
 ## Summary
