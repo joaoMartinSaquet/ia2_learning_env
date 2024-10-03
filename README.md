@@ -20,7 +20,8 @@ To set up the learning environment, ensure you have the following:
 
 ## Summary
 
-- [ECS](./doc/ECS.md)
-- [Setup Guide](./doc/setup.md)
-- [TODO](./doc/TO_DO.md)
-- [Game Basics](./doc/docs_1D.md)
+- **[ECS](./doc/ECS.md)**: A brief guide to understanding the **Entity Component System (ECS)** logic that powers the game mechanics.
+
+- **[TODO](./doc/TO_DO.md)**: A structured to-do list outlining the tasks and features that need to be completed.
+
+- **[Game Basics](./doc/docs_1D.md)**: Comprehensive documentation covering the game's core logic and fundamental principles.
