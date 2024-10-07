@@ -32,3 +32,24 @@ stateDiagram-v2
     Running --> Ended : end_timer
     Ended --> Started : r
 ```
+# environment Control
+the environment is controlled by a controller (mouse) movement and take in input delta_x wich move the player as $x_{t+1} = dx + x_t$
+```
+
+        ┌─────────────┐  ball trajectory
+        │             ├───────►         
+        │             │                 
+dx      │             │                 
+ ──────►│             │                 
+        │ environment │                 
+        │             │                 
+        │             │  player distance
+        │             ├───────►         
+        │             │                 
+        └─────────────┘                 
+```
+
+# Trajectory 
+## 1. deterministic trajectory
+the ball folow a straight line with an initial direction going rightward, the direction goes to rightward to leftward when the ball reach the window's right bounds, the direction change every times the ball reach a window's bounds
+

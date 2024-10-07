@@ -4,7 +4,7 @@
 - [x] Compute a score of ball follow
 - [x] Display the score
 - [x] Mouse control input
-- [ ] Add a new trajectory
+- [ ] Add a new trajectory (random ? )
 - [ ] Complete Readme to describe how app works plus trajectory implemented
 - [x] fixed y dimension in mouse control
 - [x] Timer
