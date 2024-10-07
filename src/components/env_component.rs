@@ -22,8 +22,6 @@ pub struct NameComponent(pub String);
 #[derive(Component)]
 pub struct ScoreTxt;
 
-#[derive(Component)]
-pub struct CumScore(pub f32);
 
 #[derive(Component)]
 pub struct TimeTracker(pub f32);

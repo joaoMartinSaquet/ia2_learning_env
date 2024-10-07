@@ -2,7 +2,7 @@ pub mod components;
 pub mod systems;
 pub mod ressources;
 
-use ressources::env_ressources::{EpisodeTimer, MoveTimer};
+use ressources::env_ressources::{EpisodeTimer, MoveTimer, CumScore};
 use systems::{env_systems::*, state_handling::{episodes_ends, toggle_run_pause}};
 use bevy::prelude::*;
 
@@ -56,6 +56,7 @@ impl Plugin for LearningEnv
         app.insert_resource(ClearColor(Color::srgb(1.0, 1.0,1.0)))
            .insert_resource(Time::<Fixed>::from_seconds(0.01))
            .insert_resource(EpisodeTimer(Timer::from_seconds(EPISODE_DURATION, TimerMode::Repeating)))
+           .insert_resource(CumScore(0.0))
            .init_state::<RunningState>()
            .init_state::<ControllerState>()
         //    .configure_sets(Update, (ControlSet.run_if))
@@ -65,7 +66,8 @@ impl Plugin for LearningEnv
            .add_systems(FixedUpdate, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, score_metric.run_if(in_state(RunningState::Running)))
            .add_systems(Update, episodes_ends)
-           .add_systems(OnEnter(RunningState::Ended), displays_cum_score);
+           .add_systems(OnEnter(RunningState::Ended), displays_cum_score)
+           .add_systems(OnEnter(RunningState::Started), restart);
     
     }
 }

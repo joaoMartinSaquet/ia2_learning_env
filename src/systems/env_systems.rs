@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 use bevy::color::palettes::basic::{RED, BLACK};
 use crate::components::env_component::*;
+use crate::ressources::env_ressources::*;
 use bevy::input::mouse::MouseMotion;
 
 
@@ -122,7 +123,8 @@ pub fn setup_env(mut commands: bevy::prelude::Commands,
                                 transform: Transform{ translation: Vec3 { x: 0.0, y: -y_obj, z: 1.0 }, scale : Vec3 { x: 0.3, y: 0.3, z: 1.0 }, ..default()},
                                 texture : asset_server.load("./player/player.png"),
                                 ..default()}, 
-                            NameComponent("player".to_string())));
+                            NameComponent("player".to_string()), 
+                            Velocity {dx: 0.0, dy: 0.0} ));
 
     spawn_env_camera(&mut commands);
 
@@ -152,10 +154,6 @@ pub fn setup_env(mut commands: bevy::prelude::Commands,
         ]),
         ScoreTxt,
     ));
-
-    commands.spawn((CumScore(0.0), NameComponent("cum_score".to_string())));
-
-
 
     command_desc_text(&mut commands, asset_server);
     
@@ -265,7 +263,7 @@ pub fn mouse_control(mut mouse_motion: EventReader<MouseMotion>,
 
 pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
                     mut query_text: Query<&mut Text, With<ScoreTxt>>,
-                    mut cumscore : Query<&mut CumScore>)
+                    mut cumscore : ResMut<CumScore>)
 {
 
     let mut x_player = 0.0;
@@ -288,13 +286,9 @@ pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
 
     let score = f32::exp(-(x_folow - x_player).powi(2));
     // println!("score {:?} ", score);
-    let mut disp_score = 0.0;
-    for mut cumscore in cumscore.iter_mut()
-    {
-        // println!("cum score {:?}", cumscore.0);
-        cumscore.0 += score;
-        disp_score = cumscore.0;
-    }
+    
+    cumscore.0 += score;
+    let disp_score = cumscore.0;
     
     for mut text in query_text.iter_mut()
     {
@@ -304,25 +298,25 @@ pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
     
 }
 
-pub fn displays_cum_score(query: Query<(&CumScore, &NameComponent)>,)
+pub fn displays_cum_score(cum_score : Res<CumScore>,)
 {
-    for (cum_score, _name) in query.iter()
-    {
-        println!("total score is : {:?}", cum_score.0)
-    }
+    println!("total score is : {:?}", cum_score.0)
+
 }
 
-// pub fn restart(mut commands: bevy::prelude::Commands, 
-//                asset_server: Res<AssetServer>,
-//                mut meshes: ResMut<Assets<Mesh>>,
-//                mut materials: ResMut<Assets<ColorMaterial>>,
-//                entity_query: Query<Entity>,
-//                windows: Query<&Window>)
-// {
+pub fn restart(mut query_transform : Query<(&mut Transform, &mut Velocity)>,
+               mut cumscore : ResMut<CumScore>, 
+               mut episode_timer : ResMut<EpisodeTimer>,)
+{
     
-//     for entity in entity_query.iter()
-//     {
-//         commands.entity(entity).despawn_recursive();   
-//     }   
+    for (mut transform, mut vel) in query_transform.iter_mut()
+    {
+        transform.translation.x = 0.0;
+        // 1-D axis transform.translation.y = 0.0;
+        vel.dx = f32::abs(vel.dx);
+    }
 
-// }
+    // reset ressources
+    cumscore.0 = 0.0;
+    episode_timer.0.reset();
+}
