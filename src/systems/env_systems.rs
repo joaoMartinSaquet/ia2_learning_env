@@ -1,6 +1,5 @@
 use core::f32;
 use bevy::color::palettes::css::WHITE;
-use bevy::ecs::query;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 use bevy::color::palettes::basic::{RED, BLACK};
@@ -279,7 +278,7 @@ pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
     // let score = 1./(f32::abs(x_folow - x_player) + 0.01);
 
     let score = f32::exp(-(x_folow - x_player).powi(2));
-    println!("score {:?} ", score);
+    // println!("score {:?} ", score);
     let mut disp_score = 0.0;
     for mut cumscore in cumscore.iter_mut()
     {
