@@ -13,12 +13,12 @@ const ELASTIC_COEF : f32 = 0.7;
 const ACCEL_TIME : f32 = 5.0;
 const T : f32 = 10.;
 
-enum trajectory {
+enum Trajectory {
     Linear,
     Random,
 }
 
-const TRAJECTORY_TO_RUN : trajectory = trajectory::Linear;
+const TRAJECTORY_TO_RUN : Trajectory = Trajectory::Random;
 
 
 pub fn spawn_env_camera(commands: &mut bevy::prelude::Commands)
@@ -197,12 +197,12 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
             // println!("ball position  {:?} ", transform.translation);
             let mut _dx = 0.0;
             match TRAJECTORY_TO_RUN {
-                trajectory::Linear => {
+                Trajectory::Linear => {
                                         _dx = linear_dx_trajectory(transform.translation.x, time.delta_seconds(), &mut vel.dx, width);
                                       },
-                _ => {
-                    _dx = linear_dx_trajectory(transform.translation.x, time.delta_seconds(), &mut vel.dx, width);
-                }
+                Trajectory::Random => {
+                                        _dx = random_dx_trajectory(transform.translation.x, width, time.delta_seconds());
+                                      },
             }
 
             transform.translation.x += _dx;
