@@ -239,15 +239,24 @@ pub fn setup_bouncing_ball(mut commands: bevy::prelude::Commands,
 
 /// This system prints out all keyboard events as they come in
 pub fn mouse_control(mut mouse_motion: EventReader<MouseMotion>,
-                     mut query: Query<(&mut Transform, &NameComponent)>,)
+                     mut query: Query<(&mut Transform, &NameComponent)>,
+                     windows: Query<&Window>,)
 {   
+    let width = windows.single().width();
     for (mut transform, name) in query.iter_mut()
     {
         if name.0 == "player".to_string()
         {   
+
             for ev in mouse_motion.read() {
-                // println!("Mouse moved: X: {} px, Y: {} px", ev.delta.x, ev.delta.y);
-                transform.translation.x += ev.delta.x;
+            // println!("Mouse moved: X: {} px, Y: {} px", ev.delta.x, ev.delta.y);
+                // don't move the player if it's out of bounds
+                let dx = ev.delta.x;
+                if f32::abs(transform.translation.x + dx) <= width/2.0
+                {
+                    transform.translation.x += dx;
+                }
+                
                 // transform.translation.y += ev.delta.y;
             }
         }
