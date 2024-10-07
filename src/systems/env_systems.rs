@@ -6,12 +6,20 @@ use bevy::color::palettes::basic::{RED, BLACK};
 use crate::components::env_component::*;
 use crate::ressources::env_ressources::*;
 use bevy::input::mouse::MouseMotion;
-
+use crate::trajectory_basics::trajectory_handling::*;
 
 const BALL_RADIUS : f32 = 10.0;
 const ELASTIC_COEF : f32 = 0.7;
 const ACCEL_TIME : f32 = 5.0;
 const T : f32 = 10.;
+
+enum trajectory {
+    Linear,
+    Random,
+}
+
+const TRAJECTORY_TO_RUN : trajectory = trajectory::Linear;
+
 
 pub fn spawn_env_camera(commands: &mut bevy::prelude::Commands)
 {
@@ -176,17 +184,28 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
             // cos traj
             // transform.translation.x += dx_trajectory(time.elapsed().as_secs_f32(), time.delta_seconds(), rad_pulse, width);
             
-            let x = transform.translation.x;
-            let vel_x = vel.dx;
+            // let x = transform.translation.x;
+            // let vel_x = vel.dx;
 
-            if f32::abs(x) >= width/2.
-            {
-                vel.dx = -vel_x;
-            }
-            // perform the translation 
+            // if f32::abs(x) >= width/2.
+            // {
+            //     vel.dx = -vel_x;
+            // }
+            // // perform the translation 
 
-            transform.translation.x += vel.dx * time.delta_seconds();
+            // transform.translation.x += vel.dx * time.delta_seconds();
             // println!("ball position  {:?} ", transform.translation);
+            let mut _dx = 0.0;
+            match TRAJECTORY_TO_RUN {
+                trajectory::Linear => {
+                                        _dx = linear_dx_trajectory(transform.translation.x, time.delta_seconds(), &mut vel.dx, width);
+                                      },
+                _ => {
+                    _dx = linear_dx_trajectory(transform.translation.x, time.delta_seconds(), &mut vel.dx, width);
+                }
+            }
+
+            transform.translation.x += _dx;
         }
     }
 

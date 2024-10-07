@@ -1,6 +1,7 @@
 pub mod components;
 pub mod systems;
 pub mod ressources;
+pub mod trajectory_basics;
 
 use ressources::env_ressources::{EpisodeTimer, MoveTimer, CumScore};
 use systems::{env_systems::*, state_handling::{episodes_ends, toggle_run_pause}};

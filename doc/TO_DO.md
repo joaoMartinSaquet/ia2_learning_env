@@ -9,12 +9,12 @@
 - [x] fixed y dimension in mouse control
 - [x] Timer
 - [ ] write res in a file to plot it
-- [ ] reset the game
+- [x] reset the game
 - [x] fix score seems too big
 - [x] fix state machine
 - [ ] tune the score metrics, maybe change it 
 - [ ] control the player using an another softwares ( décision from a python that send commands to the game) https://arrow.apache.org
-- [ ] player can displace outside the frame, fix it
+- [x] player can displace outside the frame, fix it
 
 ## 📝 Notes
 
