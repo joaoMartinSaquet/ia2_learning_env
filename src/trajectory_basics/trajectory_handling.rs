@@ -1,7 +1,7 @@
 // file that contain all the functions to manage trajectories
 
-use rand::{rngs::{StdRng, ThreadRng}, thread_rng, Rng, SeedableRng};
-use rand_distr::{uniform, Distribution, Normal, Uniform};
+use rand::rngs::StdRng;
+use rand_distr::{Distribution, Uniform};
 
 // impact on the pob law:
 // - MU_DX : if different from 0, the x displacement will have a bias towards positive or negative values
@@ -19,7 +19,18 @@ pub fn linear_dx_trajectory(x: f32, dt: f32, vel_x: &mut f32, width: f32) -> f32
     (*vel_x) * dt
 }
 
-pub fn random_dir_trajectory(x: f32, width: f32, vel_x: f32, dt: f32, rng: &mut StdRng) -> f32
+
+/// generate a random x displacement based on the current velocity and a random number generator
+///
+/// # Arguments
+///
+/// * `vel_x` - the current velocity of the object
+/// * `rng` - a random number generator
+///
+/// # Returns
+///
+/// a random x displacement
+pub fn random_dir_trajectory(vel_x: f32, rng: &mut StdRng) -> f32
 {
     // high value +1 
     let uniform = Uniform::from(0..2);

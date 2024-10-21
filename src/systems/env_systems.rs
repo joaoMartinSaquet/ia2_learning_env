@@ -1,17 +1,14 @@
+
 use core::f32;
 use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 use bevy::color::palettes::basic::{RED, BLACK};
-use rand::rngs::ThreadRng;
 use crate::components::env_component::*;
 use crate::ressources::env_ressources::*;
 use crate::score_basics::score::{self, gaussian_score, square_score};
 use bevy::input::mouse::MouseMotion;
 use crate::trajectory_basics::trajectory_handling::*;
-use bevy::prelude::*;
-use bevy_rand::prelude::{GlobalEntropy, ChaCha8Rng};
-use rand_core::RngCore;
 
 
 const BALL_RADIUS : f32 = 10.0;
@@ -21,15 +18,14 @@ const T : f32 = 10.;
 const DIR_CHGT : f32 = 0.5;
 const INIT_VEL_FACTOR : f32 = 3.0;
 
-
-#[warn(dead_code)]
+#[allow(dead_code)]
 enum Trajectory {
     Linear,
     Random,
     NonMoving,
 }
 
-const TRAJECTORY_TO_RUN : Trajectory = Trajectory::NonMoving;
+const TRAJECTORY_TO_RUN : Trajectory = Trajectory::Linear;
 
 
 pub fn spawn_env_camera(commands: &mut bevy::prelude::Commands)
@@ -202,7 +198,7 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
                                       },
                 Trajectory::Random => {
                                         if time.elapsed().as_secs_f32() % DIR_CHGT == 0.0 {
-                                            _dx = random_dir_trajectory(transform.translation.x, width, vel.dx, dt, rng);
+                                            _dx = random_dir_trajectory(width, rng);
                                             vel.dx = _dx;
                                         }
                                         if f32::abs(transform.translation.x + vel.dx * dt) >= width/2.0 {vel.dx = -vel.dx;}
@@ -283,6 +279,8 @@ pub fn mouse_control(mut mouse_motion: EventReader<MouseMotion>,
             }
         }
     }
+
+    // write_to_file_for_now(&mut query); TODO
 }
 
 pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
