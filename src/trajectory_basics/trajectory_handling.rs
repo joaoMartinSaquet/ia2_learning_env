@@ -21,22 +21,9 @@ pub fn linear_dx_trajectory(x: f32, dt: f32, vel_x: &mut f32, width: f32) -> f32
 
 pub fn random_dir_trajectory(x: f32, width: f32, vel_x: f32, dt: f32, rng: &mut StdRng) -> f32
 {
-
     // high value +1 
     let uniform = Uniform::from(0..2);
     let r = (uniform.sample(rng) * 2) - 1 ;
-    println!("dir {:?} ", r);
-    println!("next posigion {:?} ", x + (r as f32)*vel_x * dt);
-    println!("width / 2 {:?}", width/2.0);
-    // if f32::abs(x + (r as f32)*vel_x * dt) >= width/2.0
-    // {   
-    //     println!(" im here " );
-    //     (-r as f32)*vel_x
-    // }
-    // else
-    // {
-    //     (r as f32)*vel_x
-    // }
     (r as f32)*vel_x
 }
 

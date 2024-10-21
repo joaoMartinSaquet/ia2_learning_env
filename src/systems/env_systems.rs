@@ -17,8 +17,8 @@ const BALL_RADIUS : f32 = 10.0;
 const ELASTIC_COEF : f32 = 0.7;
 const ACCEL_TIME : f32 = 5.0;
 const T : f32 = 10.;
-const DIR_CHGT : f32 = 1.0;
-const INIT_VEL_FACTOR : f32 = 5.0;
+const DIR_CHGT : f32 = 0.5;
+const INIT_VEL_FACTOR : f32 = 3.0;
 
 
 enum Trajectory {
@@ -191,26 +191,19 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
     {
         if name.0 == "follow object".to_string()
         {
-            // println!("ball position  {:?} ", transform.translation);
             let mut _dx = 0.0;
             let dt = time.delta_seconds();
-            // println!("time elapsed : {:?} ", time.elapsed().as_secs_f32() % 2.0);
             match TRAJECTORY_TO_RUN {
                 Trajectory::Linear => {
                                         _dx = linear_dx_trajectory(transform.translation.x, dt, &mut vel.dx, width);
                                       },
                 Trajectory::Random => {
-                                        // println!(" time elapsed {:?} ", time.elapsed().as_secs_f32());
                                         if time.elapsed().as_secs_f32() % DIR_CHGT == 0.0 {
                                             _dx = random_dir_trajectory(transform.translation.x, width, vel.dx, dt, rng);
                                             vel.dx = _dx;
                                         }
-                                        if f32::abs(transform.translation.x + vel.dx * dt) >= width/2.0
-                                        {
-                                            println!( "out of bounds {:?} ", transform.translation.x);
-                                            _dx = 0.0;
-                                        }else {_dx = vel.dx * dt;}
-                                            
+                                        if f32::abs(transform.translation.x + vel.dx * dt) >= width/2.0 {vel.dx = -vel.dx;}
+                                        _dx = vel.dx * dt;
                                       },
             }
             // println!("dx {:?} ", _dx);
