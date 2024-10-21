@@ -33,6 +33,8 @@ stateDiagram-v2
     Ended --> Started : r
 ```
 # environment Control
+
+TBD yet #TODO
 the environment is controlled by a controller (mouse) movement and take in input delta_x wich move the player as $x_{t+1} = dx + x_t$
 ```
 
@@ -53,3 +55,10 @@ dx      │             │
 ## 1. deterministic trajectory
 the ball folow a straight line with an initial direction going rightward, the direction goes to rightward to leftward when the ball reach the window's right bounds, the direction change every times the ball reach a window's bounds
 
+# Rewards / Score
+
+## 1. gaussian
+   the score is calculated as  a gaussian with the formula $$e^{-\frac{(x_f - x_p)}{\text{STD\_SCORE}}}$$
+
+   the maximum score is then (0.01 x 10sec) = 1000.0
+   ![Gaussian score](doc/images/score_images/Gaussian_score.png)

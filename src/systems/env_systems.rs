@@ -19,14 +19,16 @@ const ACCEL_TIME : f32 = 5.0;
 const T : f32 = 10.;
 const DIR_CHGT : f32 = 0.5;
 const INIT_VEL_FACTOR : f32 = 3.0;
+const STD_SCORE : f32 = 100.0;
 
-
+#[warn(dead_code)]
 enum Trajectory {
     Linear,
     Random,
+    NonMoving,
 }
 
-const TRAJECTORY_TO_RUN : Trajectory = Trajectory::Random;
+const TRAJECTORY_TO_RUN : Trajectory = Trajectory::NonMoving;
 
 
 pub fn spawn_env_camera(commands: &mut bevy::prelude::Commands)
@@ -205,13 +207,13 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
                                         if f32::abs(transform.translation.x + vel.dx * dt) >= width/2.0 {vel.dx = -vel.dx;}
                                         _dx = vel.dx * dt;
                                       },
+                Trajectory::NonMoving => {
+                        _dx  = 0.0;
+                }
             }
-            // println!("dx {:?} ", _dx);
             transform.translation.x += _dx;
         }
     }
-
-    // println!("elapsed time {:?} ", );
 }
 
 pub fn setup_bouncing_ball(mut commands: bevy::prelude::Commands, 
@@ -305,7 +307,7 @@ pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
     // + eps to avoid division by zero
     // let score = 1./(f32::abs(x_folow - x_player) + 0.01);
 
-    let score = f32::exp(-(x_folow - x_player).powi(2));
+    let score = f32::exp(-(x_folow - x_player).powi(2)/STD_SCORE);
     // println!("score {:?} ", score);
     
     cumscore.0 += score;
