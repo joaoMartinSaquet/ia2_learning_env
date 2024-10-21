@@ -19,7 +19,7 @@ const ACCEL_TIME : f32 = 5.0;
 const T : f32 = 10.;
 const DIR_CHGT : f32 = 0.5;
 const INIT_VEL_FACTOR : f32 = 3.0;
-const STD_SCORE : f32 = 100.0;
+
 
 #[warn(dead_code)]
 enum Trajectory {

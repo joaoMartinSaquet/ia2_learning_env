@@ -58,7 +58,23 @@ the ball folow a straight line with an initial direction going rightward, the di
 # Rewards / Score
 
 ## 1. gaussian
-   the score is calculated as  a gaussian with the formula $$e^{-\frac{(x_f - x_p)}{\text{STD\_SCORE}}}$$
+The score is calculated using a Gaussian distribution, as defined by the following formula:
 
-   the maximum score is then (0.01 x 10sec) = 1000.0
-   ![Gaussian score](doc/images/score_images/Gaussian_score.png)
+$$
+\text{Score} = e^{-\frac{(x_f - x_p)}{\text{STD\_SCORE}}}
+$$
+
+Where:
+- \( x_f \) is the final value,
+- \( x_p \) is the predicted value,
+- \(\text{STD\_SCORE}\) represents the standard deviation.
+
+The maximum possible score is calculated as:
+
+$$
+\text{Maximum Score} = 0.01 \times 10 \, \text{seconds} = 1000.0
+$$
+
+<div style="text-align: center;">
+    <img src="images/score_images/Gaussian_score.png" alt="Gaussian score" />
+</div>

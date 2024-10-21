@@ -2,6 +2,7 @@ pub mod components;
 pub mod systems;
 pub mod ressources;
 pub mod trajectory_basics;
+pub mod score_basics;
 
 // rand stuff
 use rand_distr::{Normal, Distribution};
