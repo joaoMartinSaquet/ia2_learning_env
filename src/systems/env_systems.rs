@@ -17,6 +17,9 @@ const BALL_RADIUS : f32 = 10.0;
 const ELASTIC_COEF : f32 = 0.7;
 const ACCEL_TIME : f32 = 5.0;
 const T : f32 = 10.;
+const DIR_CHGT : f32 = 1.0;
+const INIT_VEL_FACTOR : f32 = 5.0;
+
 
 enum Trajectory {
     Linear,
@@ -126,7 +129,7 @@ pub fn setup_env(mut commands: bevy::prelude::Commands,
         ),
         ..default()
         }, 
-        Velocity {dx: width, dy: 0.0},         
+        Velocity {dx: width/ INIT_VEL_FACTOR, dy: 0.0},         
         NameComponent("follow object".to_string() ) )
 
     );
@@ -188,32 +191,29 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
     {
         if name.0 == "follow object".to_string()
         {
-            // cos traj
-            // transform.translation.x += dx_trajectory(time.elapsed().as_secs_f32(), time.delta_seconds(), rad_pulse, width);
-            
-            // let x = transform.translation.x;
-            // let vel_x = vel.dx;
-
-            // if f32::abs(x) >= width/2.
-            // {
-            //     vel.dx = -vel_x;
-            // }
-            // // perform the translation 
-
-            // transform.translation.x += vel.dx * time.delta_seconds();
             // println!("ball position  {:?} ", transform.translation);
             let mut _dx = 0.0;
             let dt = time.delta_seconds();
-
+            // println!("time elapsed : {:?} ", time.elapsed().as_secs_f32() % 2.0);
             match TRAJECTORY_TO_RUN {
                 Trajectory::Linear => {
                                         _dx = linear_dx_trajectory(transform.translation.x, dt, &mut vel.dx, width);
                                       },
                 Trajectory::Random => {
-                                        _dx = random_dx_trajectory(transform.translation.x, width, rng);
+                                        // println!(" time elapsed {:?} ", time.elapsed().as_secs_f32());
+                                        if time.elapsed().as_secs_f32() % DIR_CHGT == 0.0 {
+                                            _dx = random_dir_trajectory(transform.translation.x, width, vel.dx, dt, rng);
+                                            vel.dx = _dx;
+                                        }
+                                        if f32::abs(transform.translation.x + vel.dx * dt) >= width/2.0
+                                        {
+                                            println!( "out of bounds {:?} ", transform.translation.x);
+                                            _dx = 0.0;
+                                        }else {_dx = vel.dx * dt;}
+                                            
                                       },
             }
-
+            // println!("dx {:?} ", _dx);
             transform.translation.x += _dx;
         }
     }

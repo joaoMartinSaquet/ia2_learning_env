@@ -70,7 +70,7 @@ impl Plugin for LearningEnv
     fn build(&self, app: &mut App) {
 
         // genere a random distribution with a seed
-        let mut r: StdRng = StdRng::seed_from_u64(SEED);
+        let r: StdRng = StdRng::seed_from_u64(SEED);
         // let normal: Normal<f32> = Normal::new(MU_DX, SIGMA_DX).unwrap();
 
 
