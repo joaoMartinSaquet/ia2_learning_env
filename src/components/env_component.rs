@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-
+use bevy_rand;
 // default component
 #[derive(Component)]
 pub struct Position {
@@ -21,7 +21,6 @@ pub struct NameComponent(pub String);
 
 #[derive(Component)]
 pub struct ScoreTxt;
-
 
 #[derive(Component)]
 pub struct TimeTracker(pub f32);

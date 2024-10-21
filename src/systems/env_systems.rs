@@ -3,10 +3,15 @@ use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 use bevy::color::palettes::basic::{RED, BLACK};
+use rand::rngs::ThreadRng;
 use crate::components::env_component::*;
 use crate::ressources::env_ressources::*;
 use bevy::input::mouse::MouseMotion;
 use crate::trajectory_basics::trajectory_handling::*;
+use bevy::prelude::*;
+use bevy_rand::prelude::{GlobalEntropy, ChaCha8Rng};
+use rand_core::RngCore;
+
 
 const BALL_RADIUS : f32 = 10.0;
 const ELASTIC_COEF : f32 = 0.7;
@@ -169,13 +174,15 @@ pub fn setup_env(mut commands: bevy::prelude::Commands,
 
 pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComponent)>,
                           time: Res<Time>,
-                          windows: Query<&Window>)
+                          windows: Query<&Window>,
+                          mut random_source: ResMut<RandomGen>)
 {
     // time elapsed
     let window = windows.single();
     let width = window.width();
     // println!("width {:?} ", window.size());
     let _rad_pulse = 2.0*f32::consts::PI* (1./T);
+    let rng = &mut random_source.0;
 
     for (mut transform,mut vel, name) in query.iter_mut()
     {
@@ -196,12 +203,14 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
             // transform.translation.x += vel.dx * time.delta_seconds();
             // println!("ball position  {:?} ", transform.translation);
             let mut _dx = 0.0;
+            let dt = time.delta_seconds();
+
             match TRAJECTORY_TO_RUN {
                 Trajectory::Linear => {
-                                        _dx = linear_dx_trajectory(transform.translation.x, time.delta_seconds(), &mut vel.dx, width);
+                                        _dx = linear_dx_trajectory(transform.translation.x, dt, &mut vel.dx, width);
                                       },
                 Trajectory::Random => {
-                                        _dx = random_dx_trajectory(transform.translation.x, width, time.delta_seconds());
+                                        _dx = random_dx_trajectory(transform.translation.x, width, rng);
                                       },
             }
 
