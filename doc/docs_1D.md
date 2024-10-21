@@ -78,3 +78,18 @@ $$
 <div style="text-align: center;">
     <img src="images/score_images/Gaussian_score.png" alt="Gaussian score" />
 </div>
+
+## 2. square 
+
+The score is calculated using a square signal of the distance, if the distance is less or equal to PIXEL_DIST_METRIC then it is equals to 1.0 either way it's equals to 0.0
+
+The maximum possible score is calculated as:
+
+$$
+\text{Maximum Score} = 0.01 \times 10 \, \text{seconds} = 1000.0
+$$
+
+<div style="text-align: center;">
+    <img src="images/score_images/square_dist_metric.png" alt="Square score" />
+</div>
+

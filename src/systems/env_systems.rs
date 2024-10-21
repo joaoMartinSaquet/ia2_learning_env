@@ -6,6 +6,7 @@ use bevy::color::palettes::basic::{RED, BLACK};
 use rand::rngs::ThreadRng;
 use crate::components::env_component::*;
 use crate::ressources::env_ressources::*;
+use crate::score_basics::score::{self, gaussian_score, square_score};
 use bevy::input::mouse::MouseMotion;
 use crate::trajectory_basics::trajectory_handling::*;
 use bevy::prelude::*;
@@ -307,7 +308,8 @@ pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
     // + eps to avoid division by zero
     // let score = 1./(f32::abs(x_folow - x_player) + 0.01);
 
-    let score = f32::exp(-(x_folow - x_player).powi(2)/STD_SCORE);
+    // let score = gaussian_score(x_player, x_folow);
+    let score = square_score(x_player, x_folow);
     // println!("score {:?} ", score);
     
     cumscore.0 += score;
