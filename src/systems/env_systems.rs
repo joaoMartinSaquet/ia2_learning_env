@@ -200,7 +200,7 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
                                       },
                 Trajectory::Random => {
                                         if time.elapsed().as_secs_f32() % DIR_CHGT == 0.0 {
-                                            _dx = random_dir_trajectory(width, rng);
+                                            _dx = random_dir_trajectory(vel.dx, rng);
                                             vel.dx = _dx;
                                         }
                                         if f32::abs(transform.translation.x + vel.dx * dt) >= width/2.0 {vel.dx = -vel.dx;}
