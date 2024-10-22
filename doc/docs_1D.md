@@ -93,3 +93,5 @@ $$
     <img src="images/score_images/square_dist_metric.png" alt="Square score" />
 </div>
 
+# log part 
+
