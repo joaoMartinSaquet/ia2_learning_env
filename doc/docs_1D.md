@@ -61,7 +61,7 @@ the ball folow a straight line with an initial direction going rightward, the di
 The score is calculated using a Gaussian distribution, as defined by the following formula:
 
 $$
-\text{Score} = e^{-\frac{(x_f - x_p)}{\text{STD\_SCORE}}}
+\text{Score} = e^{-\frac{(x_f - x_p)^2}{\text{STD\_SCORE}}}
 $$
 
 Where:
