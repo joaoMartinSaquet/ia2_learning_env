@@ -27,7 +27,7 @@ enum Trajectory {
     NonMoving,
 }
 
-const TRAJECTORY_TO_RUN : Trajectory = Trajectory::Linear;
+const TRAJECTORY_TO_RUN : Trajectory = Trajectory::Random;
 
 
 pub fn spawn_env_camera(commands: &mut bevy::prelude::Commands)
