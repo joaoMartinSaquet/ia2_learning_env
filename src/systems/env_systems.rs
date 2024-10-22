@@ -2,6 +2,7 @@ use std::fs::File;
 use core::f32;
 use std::io::Write;
 use bevy::color::palettes::css::WHITE;
+use bevy::log::tracing_subscriber::fmt::time;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 use bevy::color::palettes::basic::{RED, BLACK};
@@ -353,10 +354,36 @@ pub fn restart(mut query_transform : Query<(&mut Transform, &mut Velocity)>,
 pub fn dumps_log(query: Query<(&Transform, &NameComponent)>, 
                  cum_score : Res<CumScore>, 
                  episode_timer : Res<EpisodeTimer>,
-                 mouse_dx : Res<LastMouseDisplacement>,
+                 mouse_d : Res<LastMouseDisplacement>,
                  mut data_file : ResMut<LogFile>)
 {
-    
-    data_file.0.write("test \n".as_bytes()).expect("write failed");
+
+    let mut player_pose_x = 0.0;
+    let mut player_pose_y = 0.0;
+    let mut ball_pose_x = 0.0;
+    let mut ball_pose_y = 0.0;
+    let mouse_dx = mouse_d.dx;
+    let mouse_dy = mouse_d.dy;
+    let score = cum_score.0;
+    let time = episode_timer.0.elapsed().as_secs_f32();
+
+    // get the player and ball pose 
+    for (transform, name) in query.iter()
+    {
+        if name.0 == "player".to_string()
+        {   
+            player_pose_x = transform.translation.x;
+            player_pose_y = transform.translation.y;
+        }
+        if name.0 == "follow object".to_string()
+        {   
+            ball_pose_x = transform.translation.x;
+            ball_pose_y = transform.translation.y;
+        }
+    }
+
+    let log_str = format!("{:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2};\n", 
+    player_pose_x, player_pose_y, ball_pose_x, ball_pose_y, mouse_dx, mouse_dy, score, time);
+    data_file.0.write(log_str.as_bytes()).expect("write failed");
 
 }

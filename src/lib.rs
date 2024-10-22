@@ -8,7 +8,7 @@ pub mod score_basics;
 use rand_distr::{Normal, Distribution};
 use rand::SeedableRng;
 use rand::rngs::StdRng;
-use std::fs::File;
+use std::{fs::File, io::Write};
 use chrono::{self, Datelike, Timelike}; 
 
 
@@ -27,6 +27,10 @@ const EPISODE_DURATION : f32  = 10.0;
 // SIGMA_DX : standard deviation of the normal distribution, i.e. the spread of the x displacement
 // SEED : seed used to generate the random number, i.e. used to generate the x displacement
 const SEED : u64 = 4896484;
+
+
+
+const HEADER_LOG_FILE : &str = "Ball's positon ; Player's Position ; Mouse Movement ; Score ; Time ; \n";
 
 #[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum RunningState {
@@ -74,8 +78,10 @@ impl Plugin for LearningEnv
 
         // genere a random distribution with a seed
         let r: StdRng = StdRng::seed_from_u64(SEED);
-        let date_time = chrono::offset::Local::now();
-    
+
+
+        // Log file creation
+        let date_time = chrono::offset::Local::now(); 
         // Format the date and time as YY_MM_DAY_HH_mm_SS
         let formatted_date = format!(
             "{:02}_{:02}_{:02}_{:02}_{:02}_{:02}",
@@ -88,7 +94,9 @@ impl Plugin for LearningEnv
         );
         println!("date {:?}",formatted_date);
         let log_file_path = "logs/application".to_owned() + &formatted_date + ".log";
-        let log_file = File::create(log_file_path).unwrap();
+        let mut log_file = File::create(log_file_path).unwrap();
+        log_file.write(HEADER_LOG_FILE.as_bytes()).unwrap();
+
         app.insert_resource(ClearColor(Color::srgb(1.0, 1.0,1.0)))
            .insert_resource(Time::<Fixed>::from_seconds(0.01))
            .insert_resource(EpisodeTimer(Timer::from_seconds(EPISODE_DURATION, TimerMode::Repeating)))
