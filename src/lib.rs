@@ -8,9 +8,11 @@ pub mod score_basics;
 use rand_distr::{Normal, Distribution};
 use rand::SeedableRng;
 use rand::rngs::StdRng;
+use std::fs::File;
+use chrono::{self, Datelike, Timelike}; 
 
 
-use ressources::env_ressources::{EpisodeTimer, MoveTimer, CumScore, RandomGen};
+use ressources::env_ressources::{CumScore, EpisodeTimer, LastMouseDisplacement, LogFile, MoveTimer, RandomGen};
 use systems::{env_systems::*, state_handling::{episodes_ends, toggle_run_pause}};
 use bevy::prelude::*;
 
@@ -72,22 +74,35 @@ impl Plugin for LearningEnv
 
         // genere a random distribution with a seed
         let r: StdRng = StdRng::seed_from_u64(SEED);
-        // let normal: Normal<f32> = Normal::new(MU_DX, SIGMA_DX).unwrap();
-
-
+        let date_time = chrono::offset::Local::now();
+    
+        // Format the date and time as YY_MM_DAY_HH_mm_SS
+        let formatted_date = format!(
+            "{:02}_{:02}_{:02}_{:02}_{:02}_{:02}",
+            date_time.year() % 100,  // Last two digits of the year
+            date_time.month(),       // Month (01-12)
+            date_time.day(),         // Day of the month (01-31)
+            date_time.hour(),        // Hour (00-23)
+            date_time.minute(),      // Minute (00-59)
+            date_time.second()       // Second (00-59)
+        );
+        println!("date {:?}",formatted_date);
+        let log_file_path = "logs/application".to_owned() + &formatted_date + ".log";
+        let log_file = File::create(log_file_path).unwrap();
         app.insert_resource(ClearColor(Color::srgb(1.0, 1.0,1.0)))
            .insert_resource(Time::<Fixed>::from_seconds(0.01))
            .insert_resource(EpisodeTimer(Timer::from_seconds(EPISODE_DURATION, TimerMode::Repeating)))
            .insert_resource(CumScore(0.0))
            .insert_resource(RandomGen(r))
+           .insert_resource(LastMouseDisplacement {dx: 0.0, dy: 0.0})
+           .insert_resource(LogFile(log_file))
            .init_state::<RunningState>()
            .init_state::<ControllerState>()
-        //    .configure_sets(Update, (ControlSet.run_if))
            .add_systems(Startup, setup_env)
            .add_systems(Update, toggle_run_pause)
            .add_systems(FixedUpdate, (run_trajectory).run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)))
-           .add_systems(FixedUpdate, score_metric.run_if(in_state(RunningState::Running)))
+           .add_systems(FixedUpdate, (score_metric, dumps_log).run_if(in_state(RunningState::Running)))
            .add_systems(Update, episodes_ends)
            .add_systems(OnEnter(RunningState::Ended), displays_cum_score)
            .add_systems(OnEnter(RunningState::Started), restart);

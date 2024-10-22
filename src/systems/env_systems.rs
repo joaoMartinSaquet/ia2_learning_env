@@ -1,5 +1,6 @@
-
+use std::fs::File;
 use core::f32;
+use std::io::Write;
 use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
@@ -258,18 +259,21 @@ pub fn setup_bouncing_ball(mut commands: bevy::prelude::Commands,
 /// This system prints out all keyboard events as they come in
 pub fn mouse_control(mut mouse_motion: EventReader<MouseMotion>,
                      mut query: Query<(&mut Transform, &NameComponent)>,
-                     windows: Query<&Window>,)
+                     windows: Query<&Window>,
+                     mut last_mouse_movement : ResMut<LastMouseDisplacement>)
 {   
     let width = windows.single().width();
+    let mut dx = 0.0; 
+    let mut dy = 0.0;
     for (mut transform, name) in query.iter_mut()
     {
         if name.0 == "player".to_string()
         {   
-
             for ev in mouse_motion.read() {
-            // println!("Mouse moved: X: {} px, Y: {} px", ev.delta.x, ev.delta.y);
+
+                dx = ev.delta.x;
+                dy = ev.delta.y;
                 // don't move the player if it's out of bounds
-                let dx = ev.delta.x;
                 if f32::abs(transform.translation.x + dx) <= width/2.0
                 {
                     transform.translation.x += dx;
@@ -280,6 +284,8 @@ pub fn mouse_control(mut mouse_motion: EventReader<MouseMotion>,
         }
     }
 
+    last_mouse_movement.dx = dx;
+    last_mouse_movement.dy = dy;    
     // write_to_file_for_now(&mut query); TODO
 }
 
@@ -342,4 +348,15 @@ pub fn restart(mut query_transform : Query<(&mut Transform, &mut Velocity)>,
     // reset ressources
     cumscore.0 = 0.0;
     episode_timer.0.reset();
+}
+
+pub fn dumps_log(query: Query<(&Transform, &NameComponent)>, 
+                 cum_score : Res<CumScore>, 
+                 episode_timer : Res<EpisodeTimer>,
+                 mouse_dx : Res<LastMouseDisplacement>,
+                 mut data_file : ResMut<LogFile>)
+{
+    
+    data_file.0.write("test \n".as_bytes()).expect("write failed");
+
 }

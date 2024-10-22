@@ -11,6 +11,7 @@ random = "0.14.0"
 rand_core = "0.6"
 bevy_rand = { version = "0.7", features = ["rand_chacha", "wyrand"] }
 rand_chacha = "0.3.1"
+chrono = "0.4.38"
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]
