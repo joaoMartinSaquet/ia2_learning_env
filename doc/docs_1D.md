@@ -95,3 +95,8 @@ $$
 
 # log part 
 
+the log file is organized as follow : 
+| **Ball's Position** | **Player's Position** | **Mouse Movement** | **Score** | **Time** |
+|---------------------|-----------------------|--------------------|-----------|----------|
+
+where each Position and movement contain a 2D variable for x and y component.

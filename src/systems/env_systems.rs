@@ -383,7 +383,7 @@ pub fn dumps_log(query: Query<(&Transform, &NameComponent)>,
     }
 
     let log_str = format!("{:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2};\n", 
-    player_pose_x, player_pose_y, ball_pose_x, ball_pose_y, mouse_dx, mouse_dy, score, time);
+    ball_pose_x, ball_pose_y, player_pose_x, player_pose_y, mouse_dx, mouse_dy, score, time);
     data_file.0.write(log_str.as_bytes()).expect("write failed");
 
 }

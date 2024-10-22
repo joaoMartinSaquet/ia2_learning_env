@@ -1,6 +1,6 @@
 // standart deviation of the score when using gaussian
 const STD_SCORE : f32 = 100.0;
-const PIXEL_DIST_METRIC : f32 = 100.0; 
+const PIXEL_DIST_METRIC : f32 = 200.0; 
 
 /*                │                   
 **                │ 1.0                   

@@ -19,7 +19,7 @@
 - [ ] choixe of strategy with alpha num
 - [x] the moves in random strategy are too sudden fix it
 - [x] save score in a file see LastMouseDisp in ressources
-- [ ] do the doc of log parts
+- [x] do the doc of log parts
 - [ ] add replay the episodes from log files
 - [ ] try to do a learning based on a log files ( basic DNN or even CGP )
 ## 📝 Notes

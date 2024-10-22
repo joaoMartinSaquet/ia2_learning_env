@@ -4,8 +4,7 @@ pub mod ressources;
 pub mod trajectory_basics;
 pub mod score_basics;
 
-// rand stuff
-use rand_distr::{Normal, Distribution};
+
 use rand::SeedableRng;
 use rand::rngs::StdRng;
 use std::{fs::File, io::Write};
@@ -30,7 +29,7 @@ const SEED : u64 = 4896484;
 
 
 
-const HEADER_LOG_FILE : &str = "Ball's positon ; Player's Position ; Mouse Movement ; Score ; Time ; \n";
+const HEADER_LOG_FILE : &str = "Bx;By;Px;Py;Mdx;Mdy;Score;Time;\n";
 
 #[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum RunningState {
