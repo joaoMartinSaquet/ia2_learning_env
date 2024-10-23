@@ -25,7 +25,7 @@ enum Trajectory {
     NonMoving,
 }
 
-const TRAJECTORY_TO_RUN : Trajectory = Trajectory::Linear;
+const TRAJECTORY_TO_RUN : Trajectory = Trajectory::Random;
 
 
 pub fn spawn_env_camera(commands: &mut bevy::prelude::Commands)
@@ -282,7 +282,6 @@ pub fn mouse_control(mut mouse_motion: EventReader<MouseMotion>,
             }
         }
     }
-    println!("mouse dx : {:?}", dx);
     last_mouse_movement.dx = dx;
     last_mouse_movement.dy = dy;    
     // write_to_file_for_now(&mut query); TODO

@@ -9,7 +9,7 @@
 - [x] Complete Readme to describe how app works plus trajectory implemented
 - [x] fixed y dimension in mouse control
 - [x] Timer
-- [ ] write res in a file to plot it and do the plotter
+- [x] write res in a file to plot it and do the plotter
 - [x] reset the game
 - [x] fix score seems too big
 - [x] fix state machine
@@ -21,10 +21,11 @@
 - [x] save score in a file see LastMouseDisp in ressources
 - [x] do the doc of log parts
 - [ ] add replay the episodes from log files
-- [ ] try to do a learning based on a log files ( basic DNN or even CGP )
+- [ ] try to do a learning based on a log files ( basic DNN or even CGP, or be crazy GRN ?!  )
 - [ ] Replay episodes with action coming from a file
-- [ ] add a idication before the ball change the directions !
+- [ ] add a idication before the ball change the directions ?!
 - [ ] add other input device (input from a file ) see notes below 
+- [ ] add change of trajectory in game
 ## 📝 Notes
 
 - the score metrics is quite strange, it comes surely from the timesteps too many call ( Maybe need to scale it to one ! max score is 1000)
