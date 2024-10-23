@@ -27,7 +27,9 @@ const EPISODE_DURATION : f32  = 10.0;
 // SEED : seed used to generate the random number, i.e. used to generate the x displacement
 const SEED : u64 = 4896484;
 
-
+// Delta t between two updates : typical 0.02 because it seems that it is mouse dt
+// most of the mouse are with a frequence of 125 Hz (0.008 s) or hte game freq ! must check that
+const UPDT : f64 = 0.008;
 
 const HEADER_LOG_FILE : &str = "Bx;By;Px;Py;Mdx;Mdy;Score;Time;\n";
 
@@ -97,7 +99,7 @@ impl Plugin for LearningEnv
         log_file.write(HEADER_LOG_FILE.as_bytes()).unwrap();
 
         app.insert_resource(ClearColor(Color::srgb(1.0, 1.0,1.0)))
-           .insert_resource(Time::<Fixed>::from_seconds(0.01))
+           .insert_resource(Time::<Fixed>::from_seconds(UPDT))
            .insert_resource(EpisodeTimer(Timer::from_seconds(EPISODE_DURATION, TimerMode::Repeating)))
            .insert_resource(CumScore(0.0))
            .insert_resource(RandomGen(r))
@@ -108,7 +110,7 @@ impl Plugin for LearningEnv
            .add_systems(Startup, setup_env)
            .add_systems(Update, toggle_run_pause)
            .add_systems(FixedUpdate, (run_trajectory).run_if(in_state(RunningState::Running)))
-           .add_systems(FixedUpdate, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)))
+           .add_systems(Update, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, (score_metric, dumps_log).run_if(in_state(RunningState::Running)))
            .add_systems(Update, episodes_ends)
            .add_systems(OnEnter(RunningState::Ended), displays_cum_score)
