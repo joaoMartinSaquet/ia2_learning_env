@@ -7,12 +7,15 @@ pub mod score_basics;
 
 use rand::SeedableRng;
 use rand::rngs::StdRng;
+use systems::state_handling::controller_choice;
 use std::{fs::File, io::Write};
 use chrono::{self, Datelike, Timelike}; 
 
 
 use ressources::env_ressources::{CumScore, EpisodeTimer, LastMouseDisplacement, LogFile, MoveTimer, RandomGen};
-use systems::{env_systems::*, state_handling::{episodes_ends, toggle_run_pause}};
+use ressources::input_ressources::FileInput;
+use systems::{env_systems::*, state_handling::*};
+use systems::read_input::read_input_from_file;
 use bevy::prelude::*;
 
 // dt of the move timer every 0.05 seconds
@@ -46,7 +49,7 @@ pub enum RunningState {
 pub enum ControllerState {
     #[default]
     Mouse,
-    Running,
+    InputFile,
 }
 
 // #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
@@ -105,16 +108,20 @@ impl Plugin for LearningEnv
            .insert_resource(RandomGen(r))
            .insert_resource(LastMouseDisplacement {dx: 0.0, dy: 0.0})
            .insert_resource(LogFile(log_file))
+           .insert_resource(FileInput(vec![]))
            .init_state::<RunningState>()
            .init_state::<ControllerState>()
            .add_systems(Startup, setup_env)
            .add_systems(Update, toggle_run_pause)
            .add_systems(FixedUpdate, (run_trajectory).run_if(in_state(RunningState::Running)))
            .add_systems(Update, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)))
+           .add_systems(FixedUpdate, (input_file_control).run_if(in_state(ControllerState::InputFile)).run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, (score_metric, dumps_log).run_if(in_state(RunningState::Running)))
            .add_systems(Update, episodes_ends)
            .add_systems(OnEnter(RunningState::Ended), displays_cum_score)
-           .add_systems(OnEnter(RunningState::Started), restart);
+           .add_systems(OnEnter(RunningState::Started), restart)
+           .add_systems(OnEnter(ControllerState::InputFile), read_input_from_file)
+           .add_systems(Update, controller_choice.run_if(in_state(RunningState::Started)));
     
     }
 }

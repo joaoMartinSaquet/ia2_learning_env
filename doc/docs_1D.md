@@ -1,5 +1,9 @@
 
 # Games states transition machine
+The systems is constrained by some state machine that control the : 
+   - **Game state** : The games is paused, running or started
+   - **Controller state** : The game is controlled by a mouse, a file with cmd in it   
+## 1. Game states
 The game operates within four primary states:
 
 1. **Started**:
@@ -32,6 +36,16 @@ stateDiagram-v2
     Running --> Ended : end_timer
     Ended --> Started : r
 ```
+## 2. Controller state
+
+To change the controller of the games you need to be in the **Started** game state, and press the key "f" or "m".
+```mermaid
+stateDiagram-v2
+    Mouse --> File : f
+    File --> Mouse : m
+```
+
+
 # environment Control
 
 TBD yet #TODO
@@ -96,7 +110,11 @@ $$
 # log part 
 
 the log file is organized as follow : 
-| **Ball's Position** | **Player's Position** | **Mouse Movement** | **Score** | **Time** |
-|---------------------|-----------------------|--------------------|-----------|----------|
+| **Ball's Position (x, y)** | **Player's Position (x, y)** | **Mouse Movement (dx, dy)** | **Score** | **Time** |
+|----------------------------|-----------------------------|-----------------------------|-----------|----------|
+| (150, 200)                 | (120, 180)                  | (20, 10)                    | 10        | 00:15    |
+| (300, 400)                 | (280, 370)                  | (30, 15)                    | 20        | 00:30    |
+| (450, 600)                 | (420, 570)                  | (30, 20)                    | 30        | 00:45    |
+| (600, 800)                 | (580, 770)                  | (20, 30)                    | 40        | 01:00    |
 
 where each Position and movement contain a 2D variable for x and y component.

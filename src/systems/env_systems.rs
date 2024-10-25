@@ -9,13 +9,15 @@ use crate::ressources::env_ressources::*;
 use crate::score_basics::score::{self, gaussian_score, square_score};
 use bevy::input::mouse::MouseMotion;
 use crate::trajectory_basics::trajectory_handling::*;
+use crate::ressources::input_ressources::FileInput;
+use crate::UPDT;
 
 
 const BALL_RADIUS : f32 = 10.0;
 const ELASTIC_COEF : f32 = 0.7;
 const ACCEL_TIME : f32 = 5.0;
 const T : f32 = 10.;
-const DIR_CHGT : f32 = 0.5;
+const DIR_CHGT : f32 = 0.8;
 const INIT_VEL_FACTOR : f32 = 3.0;
 
 #[allow(dead_code)]
@@ -186,6 +188,7 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
     let _rad_pulse = 2.0*f32::consts::PI* (1./T);
     let rng = &mut random_source.0;
 
+    println!("time : {:?} ", time.elapsed().as_secs_f32());
     for (mut transform,mut vel, name) in query.iter_mut()
     {
         if name.0 == "follow object".to_string()
@@ -197,7 +200,8 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
                                         _dx = linear_dx_trajectory(transform.translation.x, dt, &mut vel.dx, width);
                                       },
                 Trajectory::Random => {
-                                        if time.elapsed().as_secs_f32() % DIR_CHGT == 0.0 {
+                                        if time.elapsed().as_secs_f32() % DIR_CHGT < UPDT as f32 {
+                                            println!("changig dir  : {:?} ", time.elapsed().as_secs_f32());
                                             _dx = random_dir_trajectory(vel.dx, rng);
                                             vel.dx = _dx;
                                         }
@@ -383,4 +387,38 @@ pub fn dumps_log(query: Query<(&Transform, &NameComponent)>,
     ball_pose_x, ball_pose_y, player_pose_x, player_pose_y, mouse_dx, mouse_dy, score, time);
     data_file.0.write(log_str.as_bytes()).expect("write failed");
 
+}
+
+pub fn input_file_control(mut query: Query<(&mut Transform, &NameComponent)>,
+                         file_input : Res<FileInput>,
+                         mut last_mouse_movement : ResMut<LastMouseDisplacement>,
+                         windows: Query<&Window>,
+                         episode_timer : Res<EpisodeTimer>)
+{
+    let width = windows.single().width();
+    let index_cmd : f32 = episode_timer.0.elapsed().as_secs_f32() /(UPDT as f32);
+
+    
+    // print!("index_cmd {:?} ", index_cmd as usize);
+
+    let cmd = &file_input.0[index_cmd as usize].split(";").collect::<Vec<&str>>();
+    println!("cmd from file {:?} ", file_input.0[index_cmd as usize]);
+    let dx =  cmd[0].to_string().parse::<f32>().expect("parsed error for dx");
+    let dy = 0.0;
+    for (mut transform, name) in query.iter_mut()
+    {
+        if name.0 == "player".to_string()
+        {   
+
+            // don't move the player if it's out of bounds
+            if f32::abs(transform.translation.x + dx) <= width/2.0
+            {
+                transform.translation.x += dx;
+            }
+            // transform.translation.y += ev.delta.y;
+
+        }
+    }
+    last_mouse_movement.dx = dx;
+    last_mouse_movement.dy = dy;    
 }

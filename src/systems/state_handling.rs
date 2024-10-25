@@ -3,7 +3,7 @@ use bevy::input::keyboard::{KeyboardInput, KeyCode};
 use bevy::prelude::{Res, ResMut, State, NextState, Time};
 use bevy::input::ButtonState;
 use crate::ressources::env_ressources::EpisodeTimer;
-use crate::RunningState;
+use crate::{ControllerState, RunningState};
 
 
 
@@ -12,7 +12,7 @@ pub fn toggle_run_pause(mut keyboard_input_events: EventReader<KeyboardInput>,
                     state: Res<State<RunningState>>,
                     mut next_state: ResMut<NextState<RunningState>>) {
 
-   
+ 
     for event in keyboard_input_events.read() {
         if event.state == ButtonState::Pressed {
             // println!("state {:?}", state.get());
@@ -49,5 +49,24 @@ pub fn episodes_ends(state: Res<State<RunningState>>,
 
     if episode_timer.0.just_finished() && *state.get() == RunningState::Running {
         next_state.set(RunningState::Ended);
+    }
+}
+
+pub fn controller_choice(mut keyboard_input_events: EventReader<KeyboardInput>,
+                        state: Res<State<ControllerState>>,
+                        mut next_state: ResMut<NextState<ControllerState>>) {
+    
+    
+    for event in keyboard_input_events.read() {
+        if event.state == ButtonState::Pressed {
+            println!("Changing controller state  {:?}", state.get());
+            match state.get() {
+                ControllerState::Mouse => if event.key_code == KeyCode::KeyF {next_state.set(ControllerState::InputFile);} else {next_state.set(ControllerState::Mouse);},
+                
+                
+                ControllerState::InputFile => if event.key_code == KeyCode::KeyM {next_state.set(ControllerState::Mouse);} else {next_state.set(ControllerState::InputFile);},
+                _ => next_state.set(ControllerState::Mouse)
+            }
+        }
     }
 }

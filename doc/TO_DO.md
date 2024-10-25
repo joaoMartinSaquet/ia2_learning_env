@@ -26,6 +26,8 @@
 - [ ] add a idication before the ball change the directions ?!
 - [ ] add other input device (input from a file ) see notes below 
 - [ ] add change of trajectory in game
+- [ ] with 0mq (https://zeromq.org)
+- [ ] ebnd file reading command
 ## 📝 Notes
 
 - the score metrics is quite strange, it comes surely from the timesteps too many call ( Maybe need to scale it to one ! max score is 1000)
