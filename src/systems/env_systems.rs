@@ -16,7 +16,7 @@ use crate::UPDT;
 const BALL_RADIUS : f32 = 10.0;
 const ELASTIC_COEF : f32 = 0.7;
 const ACCEL_TIME : f32 = 5.0;
-const T : f32 = 10.;
+const T : f32 = 30.;
 const DIR_CHGT : f32 = 0.8;
 const INIT_VEL_FACTOR : f32 = 3.0;
 
@@ -27,7 +27,7 @@ enum Trajectory {
     NonMoving,
 }
 
-const TRAJECTORY_TO_RUN : Trajectory = Trajectory::Random;
+const TRAJECTORY_TO_RUN : Trajectory = Trajectory::Linear;
 
 
 pub fn spawn_env_camera(commands: &mut bevy::prelude::Commands)
@@ -188,7 +188,6 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
     let _rad_pulse = 2.0*f32::consts::PI* (1./T);
     let rng = &mut random_source.0;
 
-    println!("time : {:?} ", time.elapsed().as_secs_f32());
     for (mut transform,mut vel, name) in query.iter_mut()
     {
         if name.0 == "follow object".to_string()
@@ -201,11 +200,11 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
                                       },
                 Trajectory::Random => {
                                         if time.elapsed().as_secs_f32() % DIR_CHGT < UPDT as f32 {
-                                            println!("changig dir  : {:?} ", time.elapsed().as_secs_f32());
                                             _dx = random_dir_trajectory(vel.dx, rng);
                                             vel.dx = _dx;
                                         }
-                                        if f32::abs(transform.translation.x + vel.dx * dt) >= width/2.0 {vel.dx = -vel.dx;}
+                                        if f32::abs(transform.translation.x + vel.dx * dt) > width/2.0 {vel.dx = -vel.dx;}
+                                        
                                         _dx = vel.dx * dt;
                                       },
                 Trajectory::NonMoving => {
@@ -293,12 +292,14 @@ pub fn mouse_control(mut mouse_motion: EventReader<MouseMotion>,
 
 pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
                     mut query_text: Query<&mut Text, With<ScoreTxt>>,
-                    mut cumscore : ResMut<CumScore>)
+                    mut cumscore : ResMut<CumScore>,
+                    time : Res<EpisodeTimer>)
 {
 
     let mut x_player = 0.0;
     let mut x_folow = 0.0;
 
+    println!("time compute score : {:?} ", time.0.elapsed().as_secs_f32());
     for (transform, name) in query.iter()
     {
         if name.0 == "follow object".to_string()
@@ -314,7 +315,7 @@ pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
     // + eps to avoid division by zero
     // let score = 1./(f32::abs(x_folow - x_player) + 0.01);
 
-    // let score = gaussian_score(x_player, x_folow);
+    //let score = gaussian_score(x_player, x_folow);
     let score = square_score(x_player, x_folow);
     // println!("score {:?} ", score);
     
@@ -402,7 +403,7 @@ pub fn input_file_control(mut query: Query<(&mut Transform, &NameComponent)>,
     // print!("index_cmd {:?} ", index_cmd as usize);
 
     let cmd = &file_input.0[index_cmd as usize].split(";").collect::<Vec<&str>>();
-    println!("cmd from file {:?} ", file_input.0[index_cmd as usize]);
+    // println!("cmd from file {:?} ", file_input.0[index_cmd as usize]);
     let dx =  cmd[0].to_string().parse::<f32>().expect("parsed error for dx");
     let dy = 0.0;
     for (mut transform, name) in query.iter_mut()

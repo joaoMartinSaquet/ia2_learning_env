@@ -1,6 +1,6 @@
 // standart deviation of the score when using gaussian
 const STD_SCORE : f32 = 100.0;
-const PIXEL_DIST_METRIC : f32 = 200.0; 
+const PIXEL_DIST_METRIC : f32 = 50.0; 
 
 /*                │                   
 **                │ 1.0                   
@@ -30,8 +30,9 @@ pub fn gaussian_score(x_player : f32, x_folow : f32) -> f32
  */
 pub fn square_score(x_player : f32, x_folow : f32) -> f32
 {
-    let dist : f32 = (x_player - x_folow).powi(2);
 
+    let dist : f32 = f32::abs(x_player - x_folow);
+    // println!("dist : {:?} ", dist);
     if dist < PIXEL_DIST_METRIC
     {
         1.0

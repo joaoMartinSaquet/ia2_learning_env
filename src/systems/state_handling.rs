@@ -59,7 +59,7 @@ pub fn controller_choice(mut keyboard_input_events: EventReader<KeyboardInput>,
     
     for event in keyboard_input_events.read() {
         if event.state == ButtonState::Pressed {
-            println!("Changing controller state  {:?}", state.get());
+            println!("Changing controller state  {:?} event keycode : {:?}", state.get(), event.key_code);
             match state.get() {
                 ControllerState::Mouse => if event.key_code == KeyCode::KeyF {next_state.set(ControllerState::InputFile);} else {next_state.set(ControllerState::Mouse);},
                 
