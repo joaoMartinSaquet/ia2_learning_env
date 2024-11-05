@@ -105,15 +105,16 @@ pub fn setup_env(mut commands: bevy::prelude::Commands,
              asset_server: Res<AssetServer>,
              mut meshes: ResMut<Assets<Mesh>>,
              mut materials: ResMut<Assets<ColorMaterial>>,
-             windows: Query<&Window>)
+             mut windows: Query<&mut Window>)
 {
-    let window = windows.single();
+    let mut window = windows.single_mut();
     
     let width = window.width();
     let _height = window.height();
     let y_obj = 200.0;
 
-    // spawn the background first to not overwrite 
+    window.cursor.visible = false;
+    // let prim_window = windows.single_mut();
     commands.spawn(SpriteBundle {
         transform: Transform{ translation: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, scale : Vec3 { x: 0.3, y: 0.3, z: 1.0 }, ..default()},
         texture : asset_server.load("./background/background.png"),
