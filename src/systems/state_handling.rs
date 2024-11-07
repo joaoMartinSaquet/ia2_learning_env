@@ -37,11 +37,13 @@ pub fn toggle_run_pause(mut keyboard_input_events: EventReader<KeyboardInput>,
     }
 }
 
-pub fn episodes_ends(state: Res<State<RunningState>>,
+pub fn run_episodes_timer(state: Res<State<RunningState>>,
                      mut next_state: ResMut<NextState<RunningState>>,
                      time: Res<Time>,
                      mut episode_timer : ResMut<EpisodeTimer>)
 {
+    // this function is decreasing the timer when the game is running and handle the time change
+
     if *state.get() == RunningState::Running { 
         // println!("episode timer {:?}", episode_timer.0);
         episode_timer.0.tick(time.delta());

@@ -1,0 +1,3 @@
+[submodule "supervised_controller"]
+	path = supervised_controller
+	url = git@github.com:joaoMartinSaquet/supervised_controller.git

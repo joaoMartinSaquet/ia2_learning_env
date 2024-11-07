@@ -4,6 +4,7 @@ use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 use bevy::color::palettes::basic::{RED, BLACK};
+use rand::Rng;
 use crate::components::env_component::*;
 use crate::ressources::env_ressources::*;
 use crate::score_basics::score::{self, gaussian_score, square_score};
@@ -12,13 +13,17 @@ use crate::trajectory_basics::trajectory_handling::*;
 use crate::ressources::input_ressources::FileInput;
 use crate::UPDT;
 
+use bevy_rand::prelude::GlobalEntropy;
+use bevy_rand::prelude::WyRand;
 
 const BALL_RADIUS : f32 = 10.0;
 const ELASTIC_COEF : f32 = 0.7;
 const ACCEL_TIME : f32 = 5.0;
-const T : f32 = 30.;
-const DIR_CHGT : f32 = 0.8;
+// const T : f32 = 30.;
+const DIR_CHGT : f32 = 0.5;
 const INIT_VEL_FACTOR : f32 = 3.0;
+// const DIR_DT : f32 = 0.5;
+
 
 #[allow(dead_code)]
 enum Trajectory {
@@ -27,7 +32,8 @@ enum Trajectory {
     NonMoving,
 }
 
-const TRAJECTORY_TO_RUN : Trajectory = Trajectory::Linear;
+const TRAJECTORY_TO_RUN : Trajectory = Trajectory::Random;
+
 
 
 pub fn spawn_env_camera(commands: &mut bevy::prelude::Commands)
@@ -179,16 +185,16 @@ pub fn setup_env(mut commands: bevy::prelude::Commands,
 
 pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComponent)>,
                           time: Res<Time>,
+                          episode_timer : Res<EpisodeTimer>,
                           windows: Query<&Window>,
-                          mut random_source: ResMut<RandomGen>)
+                          dir_drawed : Res<DirDrawed>,)
 {
     // time elapsed
     let window = windows.single();
     let width = window.width();
-    // println!("width {:?} ", window.size());
-    let _rad_pulse = 2.0*f32::consts::PI* (1./T);
-    let rng = &mut random_source.0;
-
+    // let dir_drawed : f32 = (rng.gen_bool(0.5) as i32 * 2 - 1) as f32;
+    // println!("time : {:?} direction drawed {:?}", episode_timer.0.elapsed().as_secs_f32(), dir_drawed);
+    // println!("run traj on time : {:?} ", episode_timer.0.elapsed().as_secs_f32());
     for (mut transform,mut vel, name) in query.iter_mut()
     {
         if name.0 == "follow object".to_string()
@@ -200,13 +206,14 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
                                         _dx = linear_dx_trajectory(transform.translation.x, dt, &mut vel.dx, width);
                                       },
                 Trajectory::Random => {
-                                        if time.elapsed().as_secs_f32() % DIR_CHGT < UPDT as f32 {
-                                            _dx = random_dir_trajectory(vel.dx, rng);
-                                            vel.dx = _dx;
+                                        if episode_timer.0.elapsed().as_secs_f32() % DIR_CHGT < UPDT as f32 {
+                                            vel.dx = ((dir_drawed.0 as i32)*2 -1) as f32 * vel.dx;
                                         }
-                                        if f32::abs(transform.translation.x + vel.dx * dt) > width/2.0 {vel.dx = -vel.dx;}
                                         
-                                        _dx = vel.dx * dt;
+                                        if f32::abs(transform.translation.x + vel.dx * dt) > width/2.0 {_dx = 0.;}
+                                        else {_dx = vel.dx * dt;}
+                                        
+                                        
                                       },
                 Trajectory::NonMoving => {
                         _dx  = 0.0;
@@ -299,8 +306,7 @@ pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
 
     let mut x_player = 0.0;
     let mut x_folow = 0.0;
-
-    println!("time compute score : {:?} ", time.0.elapsed().as_secs_f32());
+    // println!("score_metrics on time : {:?} ", time.0.elapsed().as_secs_f32());
     for (transform, name) in query.iter()
     {
         if name.0 == "follow object".to_string()
@@ -369,7 +375,7 @@ pub fn dumps_log(query: Query<(&Transform, &NameComponent)>,
     let mouse_dy = mouse_d.dy;
     let score = cum_score.0;
     let time = episode_timer.0.elapsed().as_secs_f32();
-
+    // println!(" dumps log on time : {:?} ", time);
     // get the player and ball pose 
     for (transform, name) in query.iter()
     {
@@ -402,7 +408,7 @@ pub fn input_file_control(mut query: Query<(&mut Transform, &NameComponent)>,
 
     
     // print!("index_cmd {:?} ", index_cmd as usize);
-
+    
     let cmd = &file_input.0[index_cmd as usize].split(";").collect::<Vec<&str>>();
     // println!("cmd from file {:?} ", file_input.0[index_cmd as usize]);
     let dx =  cmd[0].to_string().parse::<f32>().expect("parsed error for dx");
@@ -423,4 +429,22 @@ pub fn input_file_control(mut query: Query<(&mut Transform, &NameComponent)>,
     }
     last_mouse_movement.dx = dx;
     last_mouse_movement.dy = dy;    
+}
+
+pub fn change_direction(mut dir : ResMut<DirDrawed>, 
+                        mut random_source: ResMut<RandomGen>,
+                        mut timer : ResMut<DirTimer>,
+                        time: Res<Time>               
+                        )
+
+{
+    // we want to draw a new direction every DIR_CHGT
+
+
+    if timer.0.tick(time.delta()).just_finished()
+    {
+        println!(" draw new direction : time  {:?}", timer.0.elapsed_secs());
+        dir.0 = random_source.0.gen_bool(0.5);
+    }
+    
 }
