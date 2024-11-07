@@ -67,7 +67,7 @@ pub fn controller_choice(mut keyboard_input_events: EventReader<KeyboardInput>,
                 
                 
                 ControllerState::InputFile => if event.key_code == KeyCode::KeyM {next_state.set(ControllerState::Mouse);} else {next_state.set(ControllerState::InputFile);},
-                _ => next_state.set(ControllerState::Mouse)
+                // _ => next_state.set(ControllerState::Mouse)
             }
         }
     }

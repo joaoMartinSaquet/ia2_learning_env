@@ -7,14 +7,13 @@ use bevy::color::palettes::basic::{RED, BLACK};
 use rand::Rng;
 use crate::components::env_component::*;
 use crate::ressources::env_ressources::*;
-use crate::score_basics::score::{self, gaussian_score, square_score};
+use crate::score_basics::score::{gaussian_score, square_score};
 use bevy::input::mouse::MouseMotion;
 use crate::trajectory_basics::trajectory_handling::*;
 use crate::ressources::input_ressources::FileInput;
+
 use crate::UPDT;
 
-use bevy_rand::prelude::GlobalEntropy;
-use bevy_rand::prelude::WyRand;
 
 const BALL_RADIUS : f32 = 10.0;
 const ELASTIC_COEF : f32 = 0.7;
@@ -22,7 +21,7 @@ const ACCEL_TIME : f32 = 5.0;
 // const T : f32 = 30.;
 const DIR_CHGT : f32 = 0.5;
 const INIT_VEL_FACTOR : f32 = 3.0;
-// const DIR_DT : f32 = 0.5;
+const GSCORE : bool = false;
 
 
 #[allow(dead_code)]
@@ -300,8 +299,7 @@ pub fn mouse_control(mut mouse_motion: EventReader<MouseMotion>,
 
 pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
                     mut query_text: Query<&mut Text, With<ScoreTxt>>,
-                    mut cumscore : ResMut<CumScore>,
-                    time : Res<EpisodeTimer>)
+                    mut cumscore : ResMut<CumScore>,)
 {
 
     let mut x_player = 0.0;
@@ -319,11 +317,17 @@ pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
         }        
     }   
 
+    let mut score = 0.0;
     // + eps to avoid division by zero
     // let score = 1./(f32::abs(x_folow - x_player) + 0.01);
+    if GSCORE 
+    {
+        score = gaussian_score(x_player, x_folow);
+    }else {
+        score = square_score(x_player, x_folow);
+    }
+    //
 
-    //let score = gaussian_score(x_player, x_folow);
-    let score = square_score(x_player, x_folow);
     // println!("score {:?} ", score);
     
     cumscore.0 += score;
@@ -391,9 +395,13 @@ pub fn dumps_log(query: Query<(&Transform, &NameComponent)>,
         }
     }
 
-    let log_str = format!("{:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2};\n", 
-    ball_pose_x, ball_pose_y, player_pose_x, player_pose_y, mouse_dx, mouse_dy, score, time);
-    data_file.0.write(log_str.as_bytes()).expect("write failed");
+    if !episode_timer.0.finished()
+    {
+        let log_str = format!("{:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2};\n", 
+        ball_pose_x, ball_pose_y, player_pose_x, player_pose_y, mouse_dx, mouse_dy, score, time);
+        data_file.0.write(log_str.as_bytes()).expect("write failed");
+    }
+
 
 }
 
@@ -436,15 +444,14 @@ pub fn change_direction(mut dir : ResMut<DirDrawed>,
                         mut timer : ResMut<DirTimer>,
                         time: Res<Time>               
                         )
-
 {
+    // this function draw a new direction for the ball to follow 
     // we want to draw a new direction every DIR_CHGT
-
-
     if timer.0.tick(time.delta()).just_finished()
     {
-        println!(" draw new direction : time  {:?}", timer.0.elapsed_secs());
+
         dir.0 = random_source.0.gen_bool(0.5);
+        // println!(" draw new direction : time  {:?} with dir drawed  : {:?}", timer.0.elapsed_secs(), dir.0);
     }
     
 }

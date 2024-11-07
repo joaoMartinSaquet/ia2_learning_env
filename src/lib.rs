@@ -4,11 +4,6 @@ pub mod ressources;
 pub mod trajectory_basics;
 pub mod score_basics;
 
-
-use bevy::asset::io::memory::Dir;
-use bevy::render::texture::FallbackImage;
-use bevy_rand::plugin::EntropyPlugin;
-use bevy_rand::prelude::WyRand;
 // use bevy_rand::prelude::EntropyComponent;
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
@@ -28,7 +23,7 @@ use bevy::prelude::*;
 const MOVE_DT : f32 = 0.005;
 
 // episodes duration
-const EPISODE_DURATION : f32  = 3.;
+const EPISODE_DURATION : f32  = 30.;
 
 // parameters of the normal distribution used in the random trajectory
 // MU_DX : mean of the normal distribution, i.e. the mean of the x displacement
@@ -38,7 +33,7 @@ const SEED : u64 = 200;
 
 // Delta t between two updates : typical 0.02 because it seems that it is mouse dt
 // most of the mouse are with a frequence of 125 Hz (0.008 s) or hte game freq ! must check that
-const UPDT : f64 = 0.012;
+const UPDT : f64 = 0.008;
 
 const HEADER_LOG_FILE : &str = "Bx;By;Px;Py;Mdx;Mdy;Score;Time;\n";
 
@@ -109,9 +104,9 @@ impl Plugin for LearningEnv
 
         // add basic ressources
         app.insert_resource(ClearColor(Color::srgb(1.0, 1.0,1.0)))
-        //    .insert_resource(Time::<Fixed>::from_seconds(UPDT))
+            .insert_resource(Time::<Fixed>::from_seconds(UPDT))
            .insert_resource(EpisodeTimer(Timer::from_seconds(EPISODE_DURATION, TimerMode::Repeating)))
-           .insert_resource(DirTimer(Timer::from_seconds(1., TimerMode::Repeating)))
+           .insert_resource(DirTimer(Timer::from_seconds(0.7, TimerMode::Repeating)))
            .insert_resource(CumScore(0.0))
            .insert_resource(RandomGen(r))
            .insert_resource(DirDrawed(false))
@@ -136,14 +131,14 @@ impl Plugin for LearningEnv
            .add_systems(FixedUpdate, (input_file_control).run_if(in_state(ControllerState::InputFile)).run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, (score_metric, dumps_log).chain().run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, run_episodes_timer.before(run_trajectory))
-           .add_systems(FixedUpdate, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)))
+           .add_systems(Update, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)))
            
            // on state change systems
            .add_systems(OnEnter(RunningState::Ended), displays_cum_score)
            .add_systems(OnEnter(RunningState::Started), restart)
            .add_systems(OnEnter(ControllerState::InputFile), read_input_from_file)
            .add_systems(Update, controller_choice.run_if(in_state(RunningState::Started)))
-           .add_systems(Update, change_direction.run_if(in_state(RunningState::Running)));
+           .add_systems(FixedUpdate, change_direction.run_if(in_state(RunningState::Running)));
     }
 }
 
