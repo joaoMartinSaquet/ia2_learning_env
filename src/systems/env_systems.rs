@@ -451,7 +451,7 @@ pub fn change_direction(mut dir : ResMut<DirDrawed>,
     {
 
         dir.0 = random_source.0.gen_bool(0.5);
-        // println!(" draw new direction : time  {:?} with dir drawed  : {:?}", timer.0.elapsed_secs(), dir.0);
+        println!(" draw new direction : time  {:?} with dir drawed  : {:?}", timer.0.elapsed_secs(), dir.0);
     }
     
 }

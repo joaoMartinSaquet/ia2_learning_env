@@ -106,7 +106,7 @@ impl Plugin for LearningEnv
         app.insert_resource(ClearColor(Color::srgb(1.0, 1.0,1.0)))
             .insert_resource(Time::<Fixed>::from_seconds(UPDT))
            .insert_resource(EpisodeTimer(Timer::from_seconds(EPISODE_DURATION, TimerMode::Repeating)))
-           .insert_resource(DirTimer(Timer::from_seconds(0.7, TimerMode::Repeating)))
+           .insert_resource(DirTimer(Timer::from_seconds(0.8, TimerMode::Repeating)))
            .insert_resource(CumScore(0.0))
            .insert_resource(RandomGen(r))
            .insert_resource(DirDrawed(false))
