@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_rand;
+
 // default component
 #[derive(Component)]
 pub struct Position {

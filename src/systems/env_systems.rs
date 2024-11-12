@@ -317,7 +317,7 @@ pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
         }        
     }   
 
-    let mut score = 0.0;
+    let score ;
     // + eps to avoid division by zero
     // let score = 1./(f32::abs(x_folow - x_player) + 0.01);
     if GSCORE 

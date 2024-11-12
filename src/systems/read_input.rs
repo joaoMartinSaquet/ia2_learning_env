@@ -1,8 +1,7 @@
-use bevy::prelude::{Query, ResMut, Transform};
-use crate::components::env_component::{Position, Velocity, NameComponent};
+use bevy::prelude::ResMut;
 use std::fs::File;
 use std::io::Read;
-use crate::ressources::input_ressources::{self, FileInput};
+use crate::ressources::input_ressources::FileInput;
 
 const INPUT_FILE : &str = "input/linear_input.in";
 
