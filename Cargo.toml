@@ -12,6 +12,10 @@ rand_core = "0.6"
 bevy_rand = { version = "0.7", features = ["rand_chacha", "wyrand"] }
 rand_chacha = "0.3.1"
 chrono = "0.4.38"
+bitflags = "1.0"
+libc = "0.2.15"
+zeromq = { version = "*", default-features = false, features = ["async-std-runtime", "all-transport"] }
+tokio = { version = "1", features = ["full"]}
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]
