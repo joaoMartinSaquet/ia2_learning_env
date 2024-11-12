@@ -18,6 +18,14 @@ The **Entity-Component-System (ECS)** is a software architectural pattern common
    - A **system** contains the logic that operates on entities based on their components.
    - Systems process all entities that possess certain components, applying game logic or updates to their state (e.g., a system might move entities with position and velocity components).
 
+4. **Resources**
+   - "globally unique" data of some kind. In Bevy ECS, we represent globally unique data using the Resource trait.
+
+Here are some examples of data that could be encoded as a Resource:
+
+Elapsed Time
+Asset Collections (sounds, textures, meshes)
+Renderers
 ### How ECS Works
 
 - **Entities** act as containers, holding one or more components.

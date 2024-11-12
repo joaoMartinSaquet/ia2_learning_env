@@ -4,20 +4,26 @@ pub mod ressources;
 pub mod trajectory_basics;
 pub mod score_basics;
 
-// use bevy_rand::prelude::EntropyComponent;
+use libc::sock_filter;
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 use systems::state_handling::controller_choice;
+use zeromq::PubSocket;
 use std::{fs::File, io::Write};
 use chrono::{self, Datelike, Timelike}; 
 
+// zeromq
+use zeromq::*;
 
 use ressources::env_ressources::{CumScore, EpisodeTimer, LastMouseDisplacement, 
     LogFile, MoveTimer, RandomGen, DirDrawed, DirTimer};
 use ressources::input_ressources::FileInput;
+use ressources::socket_ressources::PubSocketRessource;
 use systems::{env_systems::*, state_handling::*};
 use systems::read_input::read_input_from_file;
 use bevy::prelude::*;
+
+
 
 // dt of the move timer every 0.05 seconds
 const MOVE_DT : f32 = 0.005;
@@ -53,6 +59,12 @@ pub enum ControllerState {
     InputFile,
 }
 
+#[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
+pub enum NetworkState {
+    #[default]
+    Unconnected,
+    Connected,
+}
 // #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 // enum MyInputKindSet {
 //     Touch,
@@ -71,8 +83,7 @@ impl Plugin for BounceBall {
             // .add_plugins(EntropyPlugin::<WyRand>::with_seed(seed.to_ne_bytes()))
             .add_systems(Startup,setup_bouncing_ball)
             .insert_resource(MoveTimer(Timer::from_seconds(MOVE_DT, TimerMode::Repeating)))
-            .add_systems(FixedUpdate, (ball_dyn_handling).run_if(in_state(RunningState::Running)));
-            
+            .add_systems(FixedUpdate, (ball_dyn_handling).run_if(in_state(RunningState::Running)));       
     }
 }
 
@@ -102,9 +113,11 @@ impl Plugin for LearningEnv
         let mut log_file = File::create(log_file_path).unwrap();
         log_file.write(HEADER_LOG_FILE.as_bytes()).unwrap();
 
+        // Publisher socket creation 
+        let mut socket : PubSocket = zeromq::PubSocket::new();
         // add basic ressources
         app.insert_resource(ClearColor(Color::srgb(1.0, 1.0,1.0)))
-            .insert_resource(Time::<Fixed>::from_seconds(UPDT))
+           .insert_resource(Time::<Fixed>::from_seconds(UPDT))
            .insert_resource(EpisodeTimer(Timer::from_seconds(EPISODE_DURATION, TimerMode::Repeating)))
            .insert_resource(DirTimer(Timer::from_seconds(0.8, TimerMode::Repeating)))
            .insert_resource(CumScore(0.0))
@@ -112,7 +125,9 @@ impl Plugin for LearningEnv
            .insert_resource(DirDrawed(false))
            .insert_resource(LastMouseDisplacement {dx: 0.0, dy: 0.0})
            .insert_resource(LogFile(log_file))
-           .insert_resource(FileInput(vec![]));
+           .insert_resource(FileInput(vec![]))
+           .insert_resource(PubSocketRessource(socket));
+        
 
         // initialize states 
         app
