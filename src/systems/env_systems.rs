@@ -19,7 +19,7 @@ const BALL_RADIUS : f32 = 10.0;
 const ELASTIC_COEF : f32 = 0.7;
 const ACCEL_TIME : f32 = 5.0;
 // const T : f32 = 30.;
-const DIR_CHGT : f32 = 0.5;
+const DIR_CHGT : f32 = 1.0;
 const INIT_VEL_FACTOR : f32 = 3.0;
 const GSCORE : bool = false;
 
@@ -186,7 +186,7 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
                           time: Res<Time>,
                           episode_timer : Res<EpisodeTimer>,
                           windows: Query<&Window>,
-                          dir_drawed : Res<DirDrawed>,)
+                          mut dir_drawed : ResMut<DirDrawed>,)
 {
     // time elapsed
     let window = windows.single();
@@ -209,8 +209,11 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
                                             vel.dx = ((dir_drawed.0 as i32)*2 -1) as f32 * vel.dx;
                                         }
                                         
-                                        if f32::abs(transform.translation.x + vel.dx * dt) > width/2.0 {_dx = 0.;}
-                                        else {_dx = vel.dx * dt;}
+                                        if f32::abs(transform.translation.x + vel.dx * dt) > width/2.0 {
+                                            vel.dx = -vel.dx;
+                                            dir_drawed.0 = !dir_drawed.0 ;
+                                        }
+                                        _dx = vel.dx * dt;
                                         
                                         
                                       },
@@ -451,7 +454,7 @@ pub fn change_direction(mut dir : ResMut<DirDrawed>,
     {
 
         dir.0 = random_source.0.gen_bool(0.5);
-        println!(" draw new direction : time  {:?} with dir drawed  : {:?}", timer.0.elapsed_secs(), dir.0);
+        // println!(" draw new direction : time  {:?} with dir drawed  : {:?}", timer.0.elapsed_secs(), dir.0);
     }
     
 }

@@ -4,9 +4,10 @@ pub mod ressources;
 pub mod trajectory_basics;
 pub mod score_basics;
 
-use libc::sock_filter;
+
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
+use systems::communication::initialize_publisher;
 use systems::state_handling::controller_choice;
 use zeromq::PubSocket;
 use std::{fs::File, io::Write};
@@ -19,8 +20,7 @@ use ressources::env_ressources::{CumScore, EpisodeTimer, LastMouseDisplacement,
     LogFile, MoveTimer, RandomGen, DirDrawed, DirTimer};
 use ressources::input_ressources::FileInput;
 use ressources::socket_ressources::PubSocketRessource;
-use systems::{env_systems::*, state_handling::*};
-use systems::read_input::read_input_from_file;
+use systems::{env_systems::*, state_handling::*, communication::*, read_input::*};
 use bevy::prelude::*;
 
 
@@ -39,9 +39,10 @@ const SEED : u64 = 200;
 
 // Delta t between two updates : typical 0.02 because it seems that it is mouse dt
 // most of the mouse are with a frequence of 125 Hz (0.008 s) or hte game freq ! must check that
-const UPDT : f64 = 0.008;
+const UPDT : f64 = 0.008; // old 0.008
 
 const HEADER_LOG_FILE : &str = "Bx;By;Px;Py;Mdx;Mdy;Score;Time;\n";
+
 
 #[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum RunningState {
@@ -114,7 +115,7 @@ impl Plugin for LearningEnv
         log_file.write(HEADER_LOG_FILE.as_bytes()).unwrap();
 
         // Publisher socket creation 
-        let mut socket : PubSocket = zeromq::PubSocket::new();
+        let socket : PubSocket = zeromq::PubSocket::new();
         // add basic ressources
         app.insert_resource(ClearColor(Color::srgb(1.0, 1.0,1.0)))
            .insert_resource(Time::<Fixed>::from_seconds(UPDT))
@@ -132,7 +133,8 @@ impl Plugin for LearningEnv
         // initialize states 
         app
            .init_state::<RunningState>()
-           .init_state::<ControllerState>();
+           .init_state::<ControllerState>()
+           .init_state::<NetworkState>();
            
         // add systems
         app
@@ -140,6 +142,11 @@ impl Plugin for LearningEnv
            .add_systems(Startup, setup_env)
             // change running state
            .add_systems(Update, toggle_run_pause)
+           // change the networking state
+           .add_systems(Update, networking_choice.run_if(in_state(RunningState::Started)))
+           // change the controller state
+           .add_systems(Update, controller_choice.run_if(in_state(RunningState::Started)))
+
 
            // on running systems
            .add_systems(FixedUpdate, (run_trajectory).run_if(in_state(RunningState::Running)).before(score_metric).before(dumps_log))
@@ -147,13 +154,15 @@ impl Plugin for LearningEnv
            .add_systems(FixedUpdate, (score_metric, dumps_log).chain().run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, run_episodes_timer.before(run_trajectory))
            .add_systems(Update, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)))
-           
+           .add_systems(FixedUpdate, change_direction.run_if(in_state(RunningState::Running)))
+           .add_systems(FixedUpdate, publish_log.run_if(in_state(NetworkState::Connected)).run_if(in_state(RunningState::Running)))
+
+
            // on state change systems
            .add_systems(OnEnter(RunningState::Ended), displays_cum_score)
            .add_systems(OnEnter(RunningState::Started), restart)
            .add_systems(OnEnter(ControllerState::InputFile), read_input_from_file)
-           .add_systems(Update, controller_choice.run_if(in_state(RunningState::Started)))
-           .add_systems(FixedUpdate, change_direction.run_if(in_state(RunningState::Running)));
+           .add_systems(OnEnter(NetworkState::Connected), initialize_publisher);
     }
 }
 

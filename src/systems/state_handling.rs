@@ -3,7 +3,7 @@ use bevy::input::keyboard::{KeyboardInput, KeyCode};
 use bevy::prelude::{Res, ResMut, State, NextState, Time};
 use bevy::input::ButtonState;
 use crate::ressources::env_ressources::EpisodeTimer;
-use crate::{ControllerState, RunningState};
+use crate::{ControllerState, RunningState, NetworkState};
 
 
 
@@ -61,7 +61,7 @@ pub fn controller_choice(mut keyboard_input_events: EventReader<KeyboardInput>,
     
     for event in keyboard_input_events.read() {
         if event.state == ButtonState::Pressed {
-            println!("Changing controller state  {:?} event keycode : {:?}", state.get(), event.key_code);
+            // println!("Changing controller state  {:?} event keycode : {:?}", state.get(), event.key_code);
             match state.get() {
                 ControllerState::Mouse => if event.key_code == KeyCode::KeyF {next_state.set(ControllerState::InputFile);} else {next_state.set(ControllerState::Mouse);},
                 
@@ -69,6 +69,23 @@ pub fn controller_choice(mut keyboard_input_events: EventReader<KeyboardInput>,
                 ControllerState::InputFile => if event.key_code == KeyCode::KeyM {next_state.set(ControllerState::Mouse);} else {next_state.set(ControllerState::InputFile);},
                 // _ => next_state.set(ControllerState::Mouse)
             }
+        }
+    }
+}
+
+pub fn networking_choice(mut keyboard_input_events: EventReader<KeyboardInput>,
+                        state: Res<State<NetworkState>>,
+                        mut next_state: ResMut<NextState<NetworkState>>) {
+    
+
+    for event in keyboard_input_events.read() {
+        if event.state == ButtonState::Pressed {
+            
+            match state.get() {
+                NetworkState::Unconnected => if event.key_code == KeyCode::KeyN {next_state.set(NetworkState::Connected);}
+                NetworkState::Connected => if event.key_code == KeyCode::KeyN  {next_state.set(NetworkState::Unconnected);}
+            }
+            // println!("Changing network state #{:?} ----> #{:?} || event keycode : {:?}", state.get(), next_state, event.key_code);
         }
     }
 }
