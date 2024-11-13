@@ -1,0 +1,8 @@
+/target
+*.log
+
+# remove input file 
+/input
+
+# submodule remove
+supervised_controller/
