@@ -3,18 +3,23 @@ use crate::ressources::env_ressources::{CumScore, EpisodeTimer, LastMouseDisplac
 use bevy::prelude::{Query, Res, ResMut, Transform};
 use zeromq::{ZmqMessage, Socket};
 use zeromq::SocketSend;
-use crate::ressources::socket_ressources::PubSocketRessource;
+use crate::ressources::socket_ressources::*;
 
 
 const SERVER : &str = "tcp://127.0.0.1:5556";   
 const TOPIC : &str = "GameData/";
 
 #[tokio::main]
-pub async  fn initialize_publisher(mut pub_socket : ResMut<PubSocketRessource>)
+pub async  fn initialize_pub_sub_connection(mut pub_socket : ResMut<PubSocketRessource>,
+                                            mut sub_socket : ResMut<SubSocketRessource>)
 {   
     // ingoring error because System doesn't handle error 
     let _ = pub_socket.0.bind(SERVER).await;
-    println!(  "Socket binded to {}", SERVER);
+    println!("publisher Socket binded to {}", SERVER);
+
+    let _ = sub_socket.0.connect(SERVER).await;
+    println!("sublisher Socket connected to {}", SERVER);
+
 }
 
 #[tokio::main]

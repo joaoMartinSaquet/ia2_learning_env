@@ -63,15 +63,27 @@ pub fn controller_choice(mut keyboard_input_events: EventReader<KeyboardInput>,
         if event.state == ButtonState::Pressed {
             // println!("Changing controller state  {:?} event keycode : {:?}", state.get(), event.key_code);
             match state.get() {
-                ControllerState::Mouse => if event.key_code == KeyCode::KeyF {next_state.set(ControllerState::InputFile);} else {next_state.set(ControllerState::Mouse);},
+                ControllerState::Mouse => match event.key_code {
+                                            KeyCode::KeyF => next_state.set(ControllerState::InputFile),
+                                            KeyCode::KeyA => next_state.set(ControllerState::Sub),
+                                            _ => next_state.set(ControllerState::Mouse),}
                 
                 
-                ControllerState::InputFile => if event.key_code == KeyCode::KeyM {next_state.set(ControllerState::Mouse);} else {next_state.set(ControllerState::InputFile);},
+                ControllerState::InputFile => match event.key_code {
+                                                KeyCode::KeyM => next_state.set(ControllerState::Mouse),
+                                                KeyCode::KeyA => next_state.set(ControllerState::Sub),
+                                                _ => next_state.set(ControllerState::InputFile),}
+                
+                ControllerState::Sub => match event.key_code {
+                                        KeyCode::KeyM => next_state.set(ControllerState::Mouse),
+                                        KeyCode::KeyF => next_state.set(ControllerState::InputFile),
+                                        _ => next_state.set(ControllerState::Sub),}
+                    
+                }
                 // _ => next_state.set(ControllerState::Mouse)
             }
         }
     }
-}
 
 pub fn networking_choice(mut keyboard_input_events: EventReader<KeyboardInput>,
                         state: Res<State<NetworkState>>,

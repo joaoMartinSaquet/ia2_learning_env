@@ -7,7 +7,7 @@ pub mod score_basics;
 
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
-use systems::communication::initialize_publisher;
+use systems::communication::initialize_pub_sub_connection;
 use systems::state_handling::controller_choice;
 use zeromq::PubSocket;
 use std::{fs::File, io::Write};
@@ -19,7 +19,7 @@ use zeromq::*;
 use ressources::env_ressources::{CumScore, EpisodeTimer, LastMouseDisplacement, 
     LogFile, MoveTimer, RandomGen, DirDrawed, DirTimer};
 use ressources::input_ressources::FileInput;
-use ressources::socket_ressources::PubSocketRessource;
+use ressources::socket_ressources::*;
 use systems::{env_systems::*, state_handling::*, communication::*, read_input::*};
 use bevy::prelude::*;
 
@@ -58,6 +58,7 @@ pub enum ControllerState {
     #[default]
     Mouse,
     InputFile,
+    Sub,
 }
 
 #[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
@@ -115,7 +116,10 @@ impl Plugin for LearningEnv
         log_file.write(HEADER_LOG_FILE.as_bytes()).unwrap();
 
         // Publisher socket creation 
-        let socket : PubSocket = zeromq::PubSocket::new();
+        let log_socket : PubSocket = zeromq::PubSocket::new();
+        let cmd_socket : SubSocket = zeromq::SubSocket::new();
+
+
         // add basic ressources
         app.insert_resource(ClearColor(Color::srgb(1.0, 1.0,1.0)))
            .insert_resource(Time::<Fixed>::from_seconds(UPDT))
@@ -127,7 +131,8 @@ impl Plugin for LearningEnv
            .insert_resource(LastMouseDisplacement {dx: 0.0, dy: 0.0})
            .insert_resource(LogFile(log_file))
            .insert_resource(FileInput(vec![]))
-           .insert_resource(PubSocketRessource(socket));
+           .insert_resource(PubSocketRessource(log_socket))
+           .insert_resource(SubSocketRessource(cmd_socket));
         
 
         // initialize states 
@@ -162,7 +167,7 @@ impl Plugin for LearningEnv
            .add_systems(OnEnter(RunningState::Ended), displays_cum_score)
            .add_systems(OnEnter(RunningState::Started), restart)
            .add_systems(OnEnter(ControllerState::InputFile), read_input_from_file)
-           .add_systems(OnEnter(NetworkState::Connected), initialize_publisher);
+           .add_systems(OnEnter(NetworkState::Connected), initialize_pub_sub_connection);
     }
 }
 

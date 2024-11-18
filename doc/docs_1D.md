@@ -45,7 +45,6 @@ stateDiagram-v2
     File --> Mouse : m
 ```
 
-
 # environment Control
 
 TBD yet #TODO
@@ -118,3 +117,15 @@ the log file is organized as follow :
 | (600, 800)                 | (580, 770)                  | (20, 30)                    | 40        | 01:00    |
 
 where each Position and movement contain a 2D variable for x and y component.
+
+# Networking
+
+## state machine
+
+in started state, you can decide to use networks option, this option allow the communication of the game with other software, the game publish on a topic **GameData/** related data : 
+| **Ball's Position (x, y)** | **Player's Position (x, y)** | **Mouse Movement (dx, dy)** | **Score** | **Time** |
+|----------------------------|-----------------------------|-----------------------------|-----------|----------|
+
+## To allow connection 
+to allow connection press **n** on started state, the connection is done through the mean of a pub sub pattern 
+
