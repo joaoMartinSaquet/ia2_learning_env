@@ -120,6 +120,7 @@ impl Plugin for LearningEnv
         let cmd_socket : SubSocket = zeromq::SubSocket::new();
 
 
+
         // add basic ressources
         app.insert_resource(ClearColor(Color::srgb(1.0, 1.0,1.0)))
            .insert_resource(Time::<Fixed>::from_seconds(UPDT))
@@ -161,7 +162,7 @@ impl Plugin for LearningEnv
            .add_systems(Update, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, change_direction.run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, publish_log.run_if(in_state(NetworkState::Connected)).run_if(in_state(RunningState::Running)))
-
+            .add_systems(FixedUpdate, get_cmd_from_sub.run_if(in_state(NetworkState::Connected)).run_if(in_state(RunningState::Running)).run_if(in_state(ControllerState::Sub)).after(publish_log))
 
            // on state change systems
            .add_systems(OnEnter(RunningState::Ended), displays_cum_score)

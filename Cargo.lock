@@ -2352,6 +2352,7 @@ dependencies = [
  "rand_core",
  "rand_distr",
  "random",
+ "regex",
  "tokio",
  "zeromq",
 ]

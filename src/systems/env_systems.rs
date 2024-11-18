@@ -458,3 +458,4 @@ pub fn change_direction(mut dir : ResMut<DirDrawed>,
     }
     
 }
+
