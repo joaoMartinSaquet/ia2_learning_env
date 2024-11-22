@@ -1,8 +1,7 @@
 use core::str;
 
 use crate::components::env_component::NameComponent;
-use crate::ressources::env_ressources::{CumScore, EpisodeTimer, LastMouseDisplacement};
-use bevy::ecs::query;
+use crate::ressources::env_ressources::{CumScore, EpisodeTimer, LastCmdDisplacement};
 use bevy::prelude::{Query, Res, ResMut, Transform};
 use zeromq::{Socket, SocketRecv, ZmqMessage};
 use zeromq::SocketSend;
@@ -37,7 +36,7 @@ pub async  fn initialize_pub_sub_connection(mut pub_socket : ResMut<PubSocketRes
 pub async fn publish_log(query: Query<(&Transform, &NameComponent)>, 
                          cum_score : Res<CumScore>, 
                          episode_timer : Res<EpisodeTimer>,
-                         mouse_d : Res<LastMouseDisplacement>,
+                         mouse_d : Res<LastCmdDisplacement>,
                          mut pub_socket : ResMut<PubSocketRessource>)
 {
     let mut player_pose_x = 0.0;
@@ -84,7 +83,8 @@ pub async fn publish_log(query: Query<(&Transform, &NameComponent)>,
 
 #[tokio::main]
 pub async fn get_cmd_from_sub(mut sub_socket : ResMut<SubSocketRessource>, 
-                              mut query: Query<(&mut Transform, &NameComponent)>)
+                              mut query: Query<(&mut Transform, &NameComponent)>,
+                              mut last_cmd : ResMut<LastCmdDisplacement>)
 {
 
 
@@ -104,17 +104,8 @@ pub async fn get_cmd_from_sub(mut sub_socket : ResMut<SubSocketRessource>,
     
                 println!("mdx: {}, mdy: {}", mdx, mdy);
 
-                for (mut transform, name) in query.iter_mut()
-                {
-                    if name.0 == "player".to_string()
-                    {   
-            
-                        // don't move the player if it's out of bounds
-                        transform.translation.x += mdx as f32;
-                        transform.translation.y += mdy as f32;
-            
-                    }
-                }
+                last_cmd.dx = mdx as f32;
+                last_cmd.dy = mdy as f32;
             }
         }
     }

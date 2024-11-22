@@ -28,10 +28,11 @@ const GSCORE : bool = false;
 enum Trajectory {
     Linear,
     Random,
+    Cos,
     NonMoving,
 }
 
-const TRAJECTORY_TO_RUN : Trajectory = Trajectory::Random;
+const TRAJECTORY_TO_RUN : Trajectory = Trajectory::Cos;
 
 
 
@@ -214,9 +215,10 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
                                             dir_drawed.0 = !dir_drawed.0 ;
                                         }
                                         _dx = vel.dx * dt;
-                                        
-                                        
                                       },
+                Trajectory::Cos => {
+                                        _dx = cosinus_dx_trajectory(episode_timer.0.elapsed_secs(), dt, width);
+                }
                 Trajectory::NonMoving => {
                         _dx  = 0.0;
                 }
@@ -270,30 +272,16 @@ pub fn setup_bouncing_ball(mut commands: bevy::prelude::Commands,
 
 /// This system prints out all keyboard events as they come in
 pub fn mouse_control(mut mouse_motion: EventReader<MouseMotion>,
-                     mut query: Query<(&mut Transform, &NameComponent)>,
-                     windows: Query<&Window>,
-                     mut last_mouse_movement : ResMut<LastMouseDisplacement>)
+                     mut last_mouse_movement : ResMut<LastCmdDisplacement>)
 {   
-    let width = windows.single().width();
+    
     let mut dx = 0.0; 
     let mut dy = 0.0;
-    for (mut transform, name) in query.iter_mut()
-    {
-        if name.0 == "player".to_string()
-        {   
-            for ev in mouse_motion.read() {
+    for ev in mouse_motion.read() {
 
-                dx = ev.delta.x;
-                dy = ev.delta.y;
-                // don't move the player if it's out of bounds
-                if f32::abs(transform.translation.x + dx) <= width/2.0
-                {
-                    transform.translation.x += dx;
-                }
-                
-                // transform.translation.y += ev.delta.y;
-            }
-        }
+        dx = ev.delta.x;
+        dy = ev.delta.y;
+
     }
     last_mouse_movement.dx = dx;
     last_mouse_movement.dy = dy;    
@@ -370,7 +358,7 @@ pub fn restart(mut query_transform : Query<(&mut Transform, &mut Velocity)>,
 pub fn dumps_log(query: Query<(&Transform, &NameComponent)>, 
                  cum_score : Res<CumScore>, 
                  episode_timer : Res<EpisodeTimer>,
-                 mouse_d : Res<LastMouseDisplacement>,
+                 last_cmd_d : Res<LastCmdDisplacement>,
                  mut data_file : ResMut<LogFile>)
 {
 
@@ -378,8 +366,8 @@ pub fn dumps_log(query: Query<(&Transform, &NameComponent)>,
     let mut player_pose_y = 0.0;
     let mut ball_pose_x = 0.0;
     let mut ball_pose_y = 0.0;
-    let mouse_dx = mouse_d.dx;
-    let mouse_dy = mouse_d.dy;
+    let cmd_dx = last_cmd_d.dx;
+    let cmd_dy = last_cmd_d.dy;
     let score = cum_score.0;
     let time = episode_timer.0.elapsed().as_secs_f32();
     // println!(" dumps log on time : {:?} ", time);
@@ -401,7 +389,7 @@ pub fn dumps_log(query: Query<(&Transform, &NameComponent)>,
     if !episode_timer.0.finished()
     {
         let log_str = format!("{:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2};\n", 
-        ball_pose_x, ball_pose_y, player_pose_x, player_pose_y, mouse_dx, mouse_dy, score, time);
+        ball_pose_x, ball_pose_y, player_pose_x, player_pose_y, cmd_dx, cmd_dy, score, time);
         data_file.0.write(log_str.as_bytes()).expect("write failed");
     }
 
@@ -410,7 +398,7 @@ pub fn dumps_log(query: Query<(&Transform, &NameComponent)>,
 
 pub fn input_file_control(mut query: Query<(&mut Transform, &NameComponent)>,
                          file_input : Res<FileInput>,
-                         mut last_mouse_movement : ResMut<LastMouseDisplacement>,
+                         mut last_cmd : ResMut<LastCmdDisplacement>,
                          windows: Query<&Window>,
                          episode_timer : Res<EpisodeTimer>)
 {
@@ -438,8 +426,8 @@ pub fn input_file_control(mut query: Query<(&mut Transform, &NameComponent)>,
 
         }
     }
-    last_mouse_movement.dx = dx;
-    last_mouse_movement.dy = dy;    
+    last_cmd.dx = dx;
+    last_cmd.dy = dy;    
 }
 
 pub fn change_direction(mut dir : ResMut<DirDrawed>, 

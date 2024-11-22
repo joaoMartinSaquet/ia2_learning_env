@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::Read;
 use crate::ressources::input_ressources::FileInput;
 
-const INPUT_FILE : &str = "input/linear_input.in";
+const INPUT_FILE : &str = "input/smooth_input.in";
 
 pub fn read_input_from_file(mut file_input : ResMut<FileInput>)
 {

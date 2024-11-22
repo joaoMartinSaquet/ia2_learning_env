@@ -16,11 +16,11 @@ use chrono::{self, Datelike, Timelike};
 // zeromq
 use zeromq::*;
 
-use ressources::env_ressources::{CumScore, EpisodeTimer, LastMouseDisplacement, 
+use ressources::env_ressources::{CumScore, EpisodeTimer, LastCmdDisplacement, 
     LogFile, MoveTimer, RandomGen, DirDrawed, DirTimer};
 use ressources::input_ressources::FileInput;
 use ressources::socket_ressources::*;
-use systems::{env_systems::*, state_handling::*, communication::*, read_input::*};
+use systems::{env_systems::*, state_handling::*, communication::*, read_input::*, player::*};
 use bevy::prelude::*;
 
 
@@ -67,12 +67,14 @@ pub enum NetworkState {
     Unconnected,
     Connected,
 }
-// #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
-// enum MyInputKindSet {
-//     Touch,
-//     Mouse,
-//     Gamepad,
-// }
+
+#[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
+pub enum TaskState {
+    #[default]
+    FollowBall,
+    TargetSelection,
+}
+
 
 
 pub struct BounceBall;
@@ -129,7 +131,7 @@ impl Plugin for LearningEnv
            .insert_resource(CumScore(0.0))
            .insert_resource(RandomGen(r))
            .insert_resource(DirDrawed(false))
-           .insert_resource(LastMouseDisplacement {dx: 0.0, dy: 0.0})
+           .insert_resource(LastCmdDisplacement {dx: 0.0, dy: 0.0})
            .insert_resource(LogFile(log_file))
            .insert_resource(FileInput(vec![]))
            .insert_resource(PubSocketRessource(log_socket))
@@ -140,12 +142,14 @@ impl Plugin for LearningEnv
         app
            .init_state::<RunningState>()
            .init_state::<ControllerState>()
-           .init_state::<NetworkState>();
+           .init_state::<NetworkState>()
+           .init_state::<TaskState>();
+        
            
         // add systems
         app
             // startup
-           .add_systems(Startup, setup_env)
+           .add_systems(Startup, setup_env.run_if(in_state(TaskState::FollowBall)))
             // change running state
            .add_systems(Update, toggle_run_pause)
            // change the networking state
@@ -154,15 +158,16 @@ impl Plugin for LearningEnv
            .add_systems(Update, controller_choice.run_if(in_state(RunningState::Started)))
 
 
-           // on running systems
-           .add_systems(FixedUpdate, (run_trajectory).run_if(in_state(RunningState::Running)).before(score_metric).before(dumps_log))
+           // on running systems 
+           .add_systems(FixedUpdate, (run_trajectory).run_if(in_state(RunningState::Running)).run_if(in_state(TaskState::FollowBall)).before(score_metric).before(dumps_log))
            .add_systems(FixedUpdate, (input_file_control).run_if(in_state(ControllerState::InputFile)).run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, (score_metric, dumps_log).chain().run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, run_episodes_timer.before(run_trajectory))
            .add_systems(Update, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)))
-           .add_systems(FixedUpdate, change_direction.run_if(in_state(RunningState::Running)))
+           .add_systems(FixedUpdate, change_direction.run_if(in_state(RunningState::Running)).run_if(in_state(TaskState::FollowBall)))
            .add_systems(FixedUpdate, publish_log.run_if(in_state(NetworkState::Connected)).run_if(in_state(RunningState::Running)))
-            .add_systems(FixedUpdate, get_cmd_from_sub.run_if(in_state(NetworkState::Connected)).run_if(in_state(RunningState::Running)).run_if(in_state(ControllerState::Sub)).after(publish_log))
+           .add_systems(FixedUpdate, get_cmd_from_sub.run_if(in_state(NetworkState::Connected)).run_if(in_state(RunningState::Running)).run_if(in_state(ControllerState::Sub)).after(publish_log))
+           .add_systems(FixedUpdate, move_player.run_if(in_state(RunningState::Running)).before(dumps_log))
 
            // on state change systems
            .add_systems(OnEnter(RunningState::Ended), displays_cum_score)

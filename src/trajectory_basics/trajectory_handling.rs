@@ -8,6 +8,8 @@
 // const MU_DX : f32 = 0.0;
 // const SIGMA_DX : f32 = 10.0;
 
+use std::f32::consts::PI;
+
 pub fn linear_dx_trajectory(x: f32, dt: f32, vel_x: &mut f32, width: f32) -> f32
 {   
     if f32::abs(x) >= width/2.0 {
@@ -15,6 +17,18 @@ pub fn linear_dx_trajectory(x: f32, dt: f32, vel_x: &mut f32, width: f32) -> f32
     }
     (*vel_x) * dt
 }
+
+pub fn cosinus_dx_trajectory(t: f32, dt : f32, width: f32) -> f32
+{   
+
+
+    
+    -width/2.*f32::cos(t)*dt
+
+
+
+}
+
 
 
 /// generate a random x displacement based on the current velocity and a random number generator
