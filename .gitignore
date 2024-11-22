@@ -2,7 +2,7 @@
 *.log
 
 # remove input file 
-/input
+*.in
 
 # submodule remove
 supervised_controller/
