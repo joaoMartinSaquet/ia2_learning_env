@@ -1,6 +1,4 @@
 // file containing utils and common systems
-
-
 use core::f32;
 use std::io::Write;
 use bevy::color::palettes::css::WHITE;
@@ -12,7 +10,6 @@ use crate::components::env_component::*;
 use crate::ressources::env_ressources::*;
 use crate::score_basics::score::{gaussian_score, square_score};
 use crate::trajectory_basics::trajectory_handling::*;
-// use std::fs::File;
 use std::fs::*;
 use std::io::Read;
 use zeromq::{PubSocket, SubSocket};

@@ -3,7 +3,7 @@ pub mod systems;
 pub mod ressources;
 pub mod trajectory_basics;
 pub mod score_basics;
-
+pub mod env_common;
 
 
 pub mod target_selection;
@@ -15,7 +15,7 @@ pub mod control;
 use menu::menu::*;
 use target_selection::target::*;
 use control::control::*;
-
+use env_common::common::*;  
 
 // use bevy::ecs::schedule;
 use rand::SeedableRng;
@@ -30,7 +30,7 @@ use zeromq::*;
 
 use ressources::env_ressources::{CumScore, EpisodeTimer, 
     LogFile, MoveTimer, RandomGen, DirDrawed, DirTimer};
-use systems::{env_systems::*, state_handling::*, communication::*, player::*};
+use systems::{state_handling::*, communication::*, player::*};
 use bevy::prelude::*;
 
 
