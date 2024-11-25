@@ -1,6 +1,6 @@
 // file that contain all the functions to manage trajectories
 use bevy::prelude::*;
-
+use rand::Rng;
 use crate::UPDT;
 use crate::env_common::common::*;   
 
@@ -119,5 +119,21 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
             }
             transform.translation.x += _dx;
         }
+    }
+}
+
+pub fn change_direction(mut dir : ResMut<DirDrawed>, 
+    mut random_source: ResMut<RandomGen>,
+    mut timer : ResMut<DirTimer>,
+    time: Res<Time>               
+    )
+{
+    // this function draw a new direction for the ball to follow 
+    // we want to draw a new direction every DIR_CHGT
+    if timer.0.tick(time.delta()).just_finished()
+    {
+
+        dir.0 = random_source.0.gen_bool(0.5);
+    // println!(" draw new direction : time  {:?} with dir drawed  : {:?}", timer.0.elapsed_secs(), dir.0);
     }
 }

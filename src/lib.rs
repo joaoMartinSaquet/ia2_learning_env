@@ -14,6 +14,8 @@ use control::control::*;
 use env_common::common::*;  
 use score_basics::score::*;
 use crate::follow_apple::trajectories::*;
+use crate::follow_apple::follow_apple::*;
+
 
 // use bevy::ecs::schedule;
 use rand::SeedableRng;
