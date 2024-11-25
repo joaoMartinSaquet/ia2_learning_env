@@ -6,38 +6,24 @@ use bevy::sprite::MaterialMesh2dBundle;
 use bevy::color::palettes::basic::{RED, BLACK};
 use rand::Rng;
 
-use crate::score_basics::score::{gaussian_score, square_score};
-use crate::trajectory_basics::trajectory_handling::*;
+use crate::score_basics::score::*;
+use crate::follow_apple::trajectories::*;
 use std::fs::*;
 use std::io::{Read, Write};
 use zeromq::{PubSocket, SubSocket};
-
+use rand_chacha::ChaCha8Rng;
 
 
 use crate::menu::menu::*;
 use crate::control::control::*;
 
-use crate::UPDT;
-
 const BALL_RADIUS : f32 = 10.0;
 const ELASTIC_COEF : f32 = 0.7;
 const ACCEL_TIME : f32 = 5.0;
-// const T : f32 = 30.;
-const DIR_CHGT : f32 = 1.0;
+
 const INIT_VEL_FACTOR : f32 = 3.0;
-const GSCORE : bool = false;
 const INPUT_FILE : &str = "input/smooth_input.in";
 
-
-#[allow(dead_code)]
-enum Trajectory {
-    Linear,
-    Random,
-    Cos,
-    NonMoving,
-}
-
-const TRAJECTORY_TO_RUN : Trajectory = Trajectory::Cos;
 
 // Ressources
 #[derive(Resource)]
@@ -49,27 +35,14 @@ pub struct PubSocketRessource(pub PubSocket,);
 #[derive(Resource)]
 pub struct SubSocketRessource(pub SubSocket,);
 
-use rand_chacha::ChaCha8Rng;
-#[derive(Resource)]
-pub struct MoveTimer(pub Timer);
-
 #[derive(Resource)]
 pub struct EpisodeTimer(pub Timer);
-
-#[derive(Resource)]
-pub struct CumScore(pub f32);
 
 #[derive(Resource)]
 pub struct RandomGen(pub ChaCha8Rng);
 
 #[derive(Resource)]
 pub struct LogFile(pub File);
-
-# [derive(Resource)]
-pub struct DirDrawed(pub bool);
-
-#[derive(Resource)]
-pub struct DirTimer(pub Timer);
 
 // Components
 // default component
@@ -88,8 +61,6 @@ pub struct Velocity {
 #[derive(Component)]
 pub struct NameComponent(pub String);
 
-#[derive(Component)]
-pub struct ScoreTxt;
 
 #[derive(Component)]
 pub struct TimeTracker(pub f32);
@@ -243,68 +214,6 @@ pub fn setup_env_follow_apple(mut commands: bevy::prelude::Commands,
     
 }
 
-/// Function used to run the ball trajectory.
-///
-/// # Arguments
-///
-/// * `query` - a query on the entities with a `Transform`, `Velocity` and `NameComponent` components
-/// * `time` - the time ressource
-/// * `episode_timer` - the episode timer ressource
-/// * `windows` - a query on the windows
-/// * `dir_drawed` - a mutable ressource used to store the direction of the last drawn ball
-///
-/// # Description
-///
-/// The function will run the trajectory of the ball based on the current time of the episode.
-/// The trajectory can be linear, random, cosinus or non moving.
-/// For the random trajectory, the direction of the ball will change every `DIR_CHGT` seconds.
-/// For the cosinus trajectory, the ball will move in a cosinus function.
-/// For the linear trajectory, the ball will move with a constant velocity.
-/// For the non moving trajectory, the ball will not move.
-pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComponent)>,
-                          time: Res<Time>,
-                          episode_timer : Res<EpisodeTimer>,
-                          windows: Query<&Window>,
-                          mut dir_drawed : ResMut<DirDrawed>,)
-{
-    // time elapsed
-    let window = windows.single();
-    let width = window.width();
-    // let dir_drawed : f32 = (rng.gen_bool(0.5) as i32 * 2 - 1) as f32;
-    // println!("time : {:?} direction drawed {:?}", episode_timer.0.elapsed().as_secs_f32(), dir_drawed);
-    // println!("run traj on time : {:?} ", episode_timer.0.elapsed().as_secs_f32());
-    for (mut transform,mut vel, name) in query.iter_mut()
-    {
-        if name.0 == "follow object".to_string()
-        {
-            let mut _dx = 0.0;
-            let dt = time.delta_seconds();
-            match TRAJECTORY_TO_RUN {
-                Trajectory::Linear => {
-                                        _dx = linear_dx_trajectory(transform.translation.x, dt, &mut vel.dx, width);
-                                      },
-                Trajectory::Random => {
-                                        if episode_timer.0.elapsed().as_secs_f32() % DIR_CHGT < UPDT as f32 {
-                                            vel.dx = ((dir_drawed.0 as i32)*2 -1) as f32 * vel.dx;
-                                        }
-                                        
-                                        if f32::abs(transform.translation.x + vel.dx * dt) > width/2.0 {
-                                            vel.dx = -vel.dx;
-                                            dir_drawed.0 = !dir_drawed.0 ;
-                                        }
-                                        _dx = vel.dx * dt;
-                                      },
-                Trajectory::Cos => {
-                                        _dx = cosinus_dx_trajectory(episode_timer.0.elapsed_secs(), dt, width);
-                }
-                Trajectory::NonMoving => {
-                        _dx  = 0.0;
-                }
-            }
-            transform.translation.x += _dx;
-        }
-    }
-}
 
 /// Sets up the bouncing ball environment by spawning the ball and the ground.
 /// 
@@ -353,63 +262,6 @@ pub fn setup_bouncing_ball(mut commands: bevy::prelude::Commands,
     });
 
     command_desc_text(&mut commands, asset_server);
-}
-
-/// Calculate the score of the player based on its position and the position of the follow object
-/// 
-/// The score is calculated as a function of the distance between the player and the follow object.
-/// The function used is determined by the variable `GSCORE`.
-/// If `GSCORE` is true, the score is calculated using a Gaussian function.
-/// If `GSCORE` is false, the score is calculated using a square function.
-/// The score is then added to the cumulative score and displayed on screen.
-pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
-                    mut query_text: Query<&mut Text, With<ScoreTxt>>,
-                    mut cumscore : ResMut<CumScore>,)
-{
-
-    let mut x_player = 0.0;
-    let mut x_folow = 0.0;
-    // println!("score_metrics on time : {:?} ", time.0.elapsed().as_secs_f32());
-    for (transform, name) in query.iter()
-    {
-        if name.0 == "follow object".to_string()
-        {
-            x_folow = transform.translation.x;
-        }
-        if name.0 == "player".to_string()
-        {
-            x_player = transform.translation.x;
-        }        
-    }   
-
-    let score ;
-    // + eps to avoid division by zero
-    // let score = 1./(f32::abs(x_folow - x_player) + 0.01);
-    if GSCORE 
-    {
-        score = gaussian_score(x_player, x_folow);
-    }else {
-        score = square_score(x_player, x_folow);
-    }
-    //
-
-    // println!("score {:?} ", score);
-    
-    cumscore.0 += score;
-    let disp_score = cumscore.0;
-    
-    for mut text in query_text.iter_mut()
-    {
-        text.sections[1].value = format!("{disp_score:.2}");
-        // println!("score {:?}", score);
-    }
-    
-}
-
-pub fn displays_cum_score(cum_score : Res<CumScore>,)
-{
-    println!("total score is : {:?}", cum_score.0)
-
 }
 
 pub fn restart(mut query_transform : Query<(&mut Transform, &mut Velocity)>,

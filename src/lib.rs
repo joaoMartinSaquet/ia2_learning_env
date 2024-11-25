@@ -1,20 +1,19 @@
-pub mod components;
 pub mod systems;
-pub mod trajectory_basics;
+
+
 pub mod score_basics;
 pub mod env_common;
-
-
 pub mod target_selection;
 pub mod menu;
 pub mod control;
-
-
+pub mod follow_apple;
 
 use menu::menu::*;
 use target_selection::target::*;
 use control::control::*;
 use env_common::common::*;  
+use score_basics::score::*;
+use crate::follow_apple::trajectories::*;
 
 // use bevy::ecs::schedule;
 use rand::SeedableRng;
