@@ -30,7 +30,6 @@ use zeromq::*;
 
 use ressources::env_ressources::{CumScore, EpisodeTimer, 
     LogFile, MoveTimer, RandomGen, DirDrawed, DirTimer};
-use ressources::socket_ressources::*;
 use systems::{env_systems::*, state_handling::*, communication::*, player::*};
 use bevy::prelude::*;
 
