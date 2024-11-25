@@ -1,17 +1,15 @@
 // file containing utils and common systems
 use core::f32;
-use std::io::Write;
 use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 use bevy::color::palettes::basic::{RED, BLACK};
 use rand::Rng;
-use crate::components::env_component::*;
-use crate::ressources::env_ressources::*;
+
 use crate::score_basics::score::{gaussian_score, square_score};
 use crate::trajectory_basics::trajectory_handling::*;
 use std::fs::*;
-use std::io::Read;
+use std::io::{Read, Write};
 use zeromq::{PubSocket, SubSocket};
 
 
@@ -50,7 +48,51 @@ pub struct PubSocketRessource(pub PubSocket,);
 
 #[derive(Resource)]
 pub struct SubSocketRessource(pub SubSocket,);
-   
+
+use rand_chacha::ChaCha8Rng;
+#[derive(Resource)]
+pub struct MoveTimer(pub Timer);
+
+#[derive(Resource)]
+pub struct EpisodeTimer(pub Timer);
+
+#[derive(Resource)]
+pub struct CumScore(pub f32);
+
+#[derive(Resource)]
+pub struct RandomGen(pub ChaCha8Rng);
+
+#[derive(Resource)]
+pub struct LogFile(pub File);
+
+# [derive(Resource)]
+pub struct DirDrawed(pub bool);
+
+#[derive(Resource)]
+pub struct DirTimer(pub Timer);
+
+// Components
+// default component
+#[derive(Component)]
+pub struct Position {
+    pub x: f32,
+    pub y: f32,
+}
+
+#[derive(Component)]
+pub struct Velocity {
+    pub dx: f32,
+    pub dy: f32,
+} 
+
+#[derive(Component)]
+pub struct NameComponent(pub String);
+
+#[derive(Component)]
+pub struct ScoreTxt;
+
+#[derive(Component)]
+pub struct TimeTracker(pub f32);
 
 pub fn move_ball(
     mut query: Query<(&mut Transform, &Velocity)>,

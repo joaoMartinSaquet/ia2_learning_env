@@ -1,7 +1,5 @@
 use core::str;
 
-use crate::components::env_component::NameComponent;
-use crate::ressources::env_ressources::{CumScore, EpisodeTimer};
 use bevy::prelude::{Query, Res, ResMut, Transform};
 use zeromq::{Socket, SocketSend, ZmqMessage};
 

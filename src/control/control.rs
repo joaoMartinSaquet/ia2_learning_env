@@ -5,7 +5,8 @@ use bevy::input::mouse::MouseMotion;
 use bevy::input::keyboard::KeyboardInput;
 use bevy::input::ButtonState;
 use regex::Regex;
-use crate::components::env_component::NameComponent;
+
+use crate::env_common::common::*;
 use crate::*;
 
 // last displacement given by a controller (mouse, file, networks etc...)

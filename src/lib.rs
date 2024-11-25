@@ -1,6 +1,5 @@
 pub mod components;
 pub mod systems;
-pub mod ressources;
 pub mod trajectory_basics;
 pub mod score_basics;
 pub mod env_common;
@@ -27,9 +26,6 @@ use chrono::{self, Datelike, Timelike};
 
 // zeromq
 use zeromq::*;
-
-use ressources::env_ressources::{CumScore, EpisodeTimer, 
-    LogFile, MoveTimer, RandomGen, DirDrawed, DirTimer};
 use systems::{state_handling::*, communication::*, player::*};
 use bevy::prelude::*;
 

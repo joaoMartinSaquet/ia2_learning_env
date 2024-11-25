@@ -1,7 +1,6 @@
 use core::f32;
 use bevy::prelude::*;
-use crate::components::env_component::*;
-use crate::ressources::env_ressources::*;
+use crate::env_common::common::*;
 
 use crate::control::control::*;
 
