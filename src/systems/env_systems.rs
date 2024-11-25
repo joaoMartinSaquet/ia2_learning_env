@@ -1,3 +1,6 @@
+// file containing utils and common systems
+
+
 use core::f32;
 use std::io::Write;
 use bevy::color::palettes::css::WHITE;
@@ -8,12 +11,18 @@ use rand::Rng;
 use crate::components::env_component::*;
 use crate::ressources::env_ressources::*;
 use crate::score_basics::score::{gaussian_score, square_score};
-use bevy::input::mouse::MouseMotion;
 use crate::trajectory_basics::trajectory_handling::*;
-use crate::ressources::input_ressources::FileInput;
+// use std::fs::File;
+use std::fs::*;
+use std::io::Read;
+use zeromq::{PubSocket, SubSocket};
+
+
+
+use crate::menu::menu::*;
+use crate::control::control::*;
 
 use crate::UPDT;
-
 
 const BALL_RADIUS : f32 = 10.0;
 const ELASTIC_COEF : f32 = 0.7;
@@ -22,6 +31,7 @@ const ACCEL_TIME : f32 = 5.0;
 const DIR_CHGT : f32 = 1.0;
 const INIT_VEL_FACTOR : f32 = 3.0;
 const GSCORE : bool = false;
+const INPUT_FILE : &str = "input/smooth_input.in";
 
 
 #[allow(dead_code)]
@@ -34,13 +44,16 @@ enum Trajectory {
 
 const TRAJECTORY_TO_RUN : Trajectory = Trajectory::Cos;
 
+// Ressources
+#[derive(Resource)]
+pub struct FileInput(pub Vec<String>);
 
+#[derive(Resource)]
+pub struct PubSocketRessource(pub PubSocket,);
 
-pub fn spawn_env_camera(commands: &mut bevy::prelude::Commands)
-{
-    commands
-    .spawn(Camera2dBundle::default());// .insert(IA2learningEnvPlugin);
-}
+#[derive(Resource)]
+pub struct SubSocketRessource(pub SubSocket,);
+   
 
 pub fn move_ball(
     mut query: Query<(&mut Transform, &Velocity)>,
@@ -55,6 +68,17 @@ pub fn move_ball(
 
 }
 
+/// Handle the dynamic of the ball.
+///
+/// In this function, we manage the dynamic of the ball. The ball's position is updated
+/// according to its velocity, and its velocity is updated according to the gravity.
+/// When the ball hit the ground, its velocity is reversed and reduced by the coefficient
+/// of restitution.
+///
+/// The function takes a mutable reference to a `Query` containing the ball's `Transform`
+/// and `Velocity` components, and a `Res` containing the `Time` resource.
+///
+/// The function returns nothing.
 pub fn ball_dyn_handling(
     mut query: Query<(&mut Transform, &mut Velocity)>,
     time: Res<Time>,
@@ -121,11 +145,6 @@ pub fn setup_env_follow_apple(mut commands: bevy::prelude::Commands,
 
     window.cursor.visible = false;
     // let prim_window = windows.single_mut();
-    commands.spawn(SpriteBundle {
-        transform: Transform{ translation: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, scale : Vec3 { x: 0.3, y: 0.3, z: 1.0 }, ..default()},
-        texture : asset_server.load("./background/background.png"),
-        ..default()});
-
 
     // spawn the object to follow, it s a ball
     commands.spawn((MaterialMesh2dBundle {
@@ -138,7 +157,8 @@ pub fn setup_env_follow_apple(mut commands: bevy::prelude::Commands,
         ..default()
         }, 
         Velocity {dx: width/ INIT_VEL_FACTOR, dy: 0.0},         
-        NameComponent("follow object".to_string() ) )
+        NameComponent("follow object".to_string() ), 
+        OnGameScreen )
 
     );
 
@@ -148,10 +168,10 @@ pub fn setup_env_follow_apple(mut commands: bevy::prelude::Commands,
                                 texture : asset_server.load("./player/player.png"),
                                 ..default()}, 
                             NameComponent("player".to_string()), 
-                            Velocity {dx: 0.0, dy: 0.0} ));
-
-    spawn_env_camera(&mut commands);
-
+                            Velocity {dx: 0.0, dy: 0.0}, 
+                            OnGameScreen )
+                            );
+                            
  
     // spawn score text 
     commands.spawn((
@@ -177,12 +197,31 @@ pub fn setup_env_follow_apple(mut commands: bevy::prelude::Commands,
 
         ]),
         ScoreTxt,
-    ));
+        OnGameScreen),
+    );
 
     command_desc_text(&mut commands, asset_server);
     
 }
 
+/// Function used to run the ball trajectory.
+///
+/// # Arguments
+///
+/// * `query` - a query on the entities with a `Transform`, `Velocity` and `NameComponent` components
+/// * `time` - the time ressource
+/// * `episode_timer` - the episode timer ressource
+/// * `windows` - a query on the windows
+/// * `dir_drawed` - a mutable ressource used to store the direction of the last drawn ball
+///
+/// # Description
+///
+/// The function will run the trajectory of the ball based on the current time of the episode.
+/// The trajectory can be linear, random, cosinus or non moving.
+/// For the random trajectory, the direction of the ball will change every `DIR_CHGT` seconds.
+/// For the cosinus trajectory, the ball will move in a cosinus function.
+/// For the linear trajectory, the ball will move with a constant velocity.
+/// For the non moving trajectory, the ball will not move.
 pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComponent)>,
                           time: Res<Time>,
                           episode_timer : Res<EpisodeTimer>,
@@ -228,6 +267,20 @@ pub fn run_trajectory(mut query: Query<(&mut Transform, &mut Velocity, &NameComp
     }
 }
 
+/// Sets up the bouncing ball environment by spawning the ball and the ground.
+/// 
+/// This function spawns a bouncing ball entity with an initial position and velocity,
+/// as well as a ground entity to provide a surface for the ball to bounce on.
+/// 
+/// # Parameters
+/// 
+/// - `commands`: A mutable reference to the Bevy `Commands` object, used for spawning entities.
+/// - `asset_server`: A reference to the Bevy `AssetServer`, used to load assets.
+/// - `meshes`: A mutable reference to the Bevy `Assets<Mesh>`, used to add meshes.
+/// - `materials`: A mutable reference to the Bevy `Assets<ColorMaterial>`, used to add materials.
+/// 
+/// The ball is represented as a circle with a defined radius and a red color. The ground is represented
+/// as a rectangle with a black color.
 pub fn setup_bouncing_ball(mut commands: bevy::prelude::Commands, 
     asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -260,34 +313,16 @@ pub fn setup_bouncing_ball(mut commands: bevy::prelude::Commands,
         ..default()
     });
 
-    spawn_env_camera(&mut commands);
-
     command_desc_text(&mut commands, asset_server);
 }
 
-// // fn dx_trajectory(t:f32, dt:f32, rad_pulse:f32, width:f32) -> f32
-// // {
-//     rad_pulse*(width/2.0)*f32::cos(rad_pulse*(t - 0.0*T/2.0))*dt
-// }
-
-/// This system prints out all keyboard events as they come in
-pub fn mouse_control(mut mouse_motion: EventReader<MouseMotion>,
-                     mut last_mouse_movement : ResMut<LastCmdDisplacement>)
-{   
-    
-    let mut dx = 0.0; 
-    let mut dy = 0.0;
-    for ev in mouse_motion.read() {
-
-        dx = ev.delta.x;
-        dy = ev.delta.y;
-
-    }
-    last_mouse_movement.dx = dx;
-    last_mouse_movement.dy = dy;    
-    // write_to_file_for_now(&mut query); TODO
-}
-
+/// Calculate the score of the player based on its position and the position of the follow object
+/// 
+/// The score is calculated as a function of the distance between the player and the follow object.
+/// The function used is determined by the variable `GSCORE`.
+/// If `GSCORE` is true, the score is calculated using a Gaussian function.
+/// If `GSCORE` is false, the score is calculated using a square function.
+/// The score is then added to the cumulative score and displayed on screen.
 pub fn score_metric(query: Query<(&Transform, &NameComponent)>,
                     mut query_text: Query<&mut Text, With<ScoreTxt>>,
                     mut cumscore : ResMut<CumScore>,)
@@ -396,40 +431,6 @@ pub fn dumps_log(query: Query<(&Transform, &NameComponent)>,
 
 }
 
-pub fn input_file_control(mut query: Query<(&mut Transform, &NameComponent)>,
-                         file_input : Res<FileInput>,
-                         mut last_cmd : ResMut<LastCmdDisplacement>,
-                         windows: Query<&Window>,
-                         episode_timer : Res<EpisodeTimer>)
-{
-    let width = windows.single().width();
-    let index_cmd : f32 = episode_timer.0.elapsed().as_secs_f32() /(UPDT as f32);
-
-    
-    // print!("index_cmd {:?} ", index_cmd as usize);
-    
-    let cmd = &file_input.0[index_cmd as usize].split(";").collect::<Vec<&str>>();
-    // println!("cmd from file {:?} ", file_input.0[index_cmd as usize]);
-    let dx =  cmd[0].to_string().parse::<f32>().expect("parsed error for dx");
-    let dy = 0.0;
-    for (mut transform, name) in query.iter_mut()
-    {
-        if name.0 == "player".to_string()
-        {   
-
-            // don't move the player if it's out of bounds
-            if f32::abs(transform.translation.x + dx) <= width/2.0
-            {
-                transform.translation.x += dx;
-            }
-            // transform.translation.y += ev.delta.y;
-
-        }
-    }
-    last_cmd.dx = dx;
-    last_cmd.dy = dy;    
-}
-
 pub fn change_direction(mut dir : ResMut<DirDrawed>, 
                         mut random_source: ResMut<RandomGen>,
                         mut timer : ResMut<DirTimer>,
@@ -451,4 +452,25 @@ pub fn despawn_objects(mut commands: Commands, query: Query<Entity, With<NameCom
     for entity in query.iter() {
         commands.entity(entity).despawn();
     }
+}
+
+pub fn setup_cam(mut commands: Commands, asset_server: Res<AssetServer>,) {
+    commands.spawn(Camera2dBundle::default());
+    commands.spawn((SpriteBundle {
+        transform: Transform{ translation: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, scale : Vec3 { x: 0.3, y: 0.3, z: 1.0 }, ..default()},
+        texture : asset_server.load("./background/background.png"),
+        ..default()}, 
+        ));
+}
+
+pub fn read_input_from_file(mut file_input : ResMut<FileInput>)
+{
+    let mut file: File = File::open(INPUT_FILE).unwrap();
+    let mut content : String = String::new();
+
+    file.read_to_string(&mut content).unwrap();
+    let mut v : Vec<String> = content.split("\n").map(|x| x.to_string()).collect();
+    v.remove(v.len()-1);
+    v.remove(0);
+    file_input.0 = v;
 }

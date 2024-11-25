@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::components::env_component::*;
 use crate::ressources::env_ressources::*;
 
+use crate::control::control::*;
 
 
 pub fn move_player(mut query: Query<(&mut Transform, &NameComponent)>,

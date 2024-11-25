@@ -1,13 +1,13 @@
 use core::str;
 
 use crate::components::env_component::NameComponent;
-use crate::ressources::env_ressources::{CumScore, EpisodeTimer, LastCmdDisplacement};
+use crate::ressources::env_ressources::{CumScore, EpisodeTimer};
 use bevy::prelude::{Query, Res, ResMut, Transform};
-use zeromq::{Socket, SocketRecv, ZmqMessage};
-use zeromq::SocketSend;
-use crate::ressources::socket_ressources::*;
-use regex::Regex;
+use zeromq::{Socket, SocketSend, ZmqMessage};
 
+
+use crate::control::control::*;
+use crate::systems::env_systems::*;
 
 const SERVER : &str = "tcp://127.0.0.1";   
 const LOG_PORT : &str = "5556";
@@ -81,32 +81,4 @@ pub async fn publish_log(query: Query<(&Transform, &NameComponent)>,
     }
 }
 
-#[tokio::main]
-pub async fn get_cmd_from_sub(mut sub_socket : ResMut<SubSocketRessource>, 
-                              mut query: Query<(&mut Transform, &NameComponent)>,
-                              mut last_cmd : ResMut<LastCmdDisplacement>)
-{
 
-
-    let m = sub_socket.0.recv().await;
-    // let m = sub_socket.0.monitor();
-    println!("message : {:?} ", m);
-
-    if m.is_ok()
-    {   
-        let data  =  String::from_utf8(m.unwrap().get(0).unwrap().to_vec()).unwrap();
-        let re = Regex::new(r"mdx:\s*([-\d.]+);\s*mdy:\s*([-\d.]+);").unwrap();
-        if let Some(captures) = re.captures(&data) {
-            if let (Some(mdx_match), Some(mdy_match)) = (captures.get(1), captures.get(2)) {
-                // Parse the matched values into floats
-                let mdx: f64 = mdx_match.as_str().parse().unwrap();
-                let mdy: f64 = mdy_match.as_str().parse().unwrap();
-    
-                println!("mdx: {}, mdy: {}", mdx, mdy);
-
-                last_cmd.dx = mdx as f32;
-                last_cmd.dy = mdy as f32;
-            }
-        }
-    }
-}

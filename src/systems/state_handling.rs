@@ -54,38 +54,7 @@ pub fn run_episodes_timer(state: Res<State<RunningState>>,
     }
 }
 
-pub fn controller_choice(mut keyboard_input_events: EventReader<KeyboardInput>,
-                        state: Res<State<ControllerState>>,
-                        mut next_state: ResMut<NextState<ControllerState>>) {
-    
-    
-    for event in keyboard_input_events.read() {
-        if event.state == ButtonState::Pressed {
-            // println!("Changing controller state  {:?} event keycode : {:?}", state.get(), event.key_code);
-            match state.get() {
-                ControllerState::Mouse => match event.key_code {
-                                            KeyCode::KeyF => next_state.set(ControllerState::InputFile),
-                                            KeyCode::KeyA => next_state.set(ControllerState::Sub),
-                                            _ => next_state.set(ControllerState::Mouse),}
-                
-                
-                ControllerState::InputFile => match event.key_code {
-                                                KeyCode::KeyM => next_state.set(ControllerState::Mouse),
-                                                KeyCode::KeyA => next_state.set(ControllerState::Sub),
-                                                _ => next_state.set(ControllerState::InputFile),}
-                
-                ControllerState::Sub => match event.key_code {
-                                        KeyCode::KeyM => next_state.set(ControllerState::Mouse),
-                                        KeyCode::KeyF => next_state.set(ControllerState::InputFile),
-                                        _ => next_state.set(ControllerState::Sub),}
-                    
-                }
-                // _ => next_state.set(ControllerState::Mouse)
-            }
-        }
 
-        
-    }
 
 pub fn networking_choice(mut keyboard_input_events: EventReader<KeyboardInput>,
                         state: Res<State<NetworkState>>,
@@ -102,26 +71,4 @@ pub fn networking_choice(mut keyboard_input_events: EventReader<KeyboardInput>,
             // println!("Changing network state #{:?} ----> #{:?} || event keycode : {:?}", state.get(), next_state, event.key_code);
         }
     }
-}
-
-pub fn task_choice(mut keyboard_input_events: EventReader<KeyboardInput>,
-    state: Res<State<TaskState>>,
-    mut next_state: ResMut<NextState<TaskState>>) {
-
-
-for event in keyboard_input_events.read() {
-if event.state == ButtonState::Pressed {
-
-match state.get() {
-    TaskState::Menu => match event.key_code {
-        KeyCode::Numpad1 => next_state.set(TaskState::FollowBall),
-        KeyCode::Numpad2 => next_state.set(TaskState::TargetSelection),
-        _ => next_state.set(TaskState::Menu),  
-    } 
-    TaskState::FollowBall => if event.key_code == KeyCode::Numpad2 {next_state.set(TaskState::TargetSelection);}
-    TaskState::TargetSelection => if event.key_code == KeyCode::Numpad1  {next_state.set(TaskState::FollowBall);}
-}
-// println!("Changing network state #{:?} ----> #{:?} || event keycode : {:?}", state.get(), next_state, event.key_code);
-}
-}
 }

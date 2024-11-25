@@ -19,13 +19,6 @@ pub struct CumScore(pub f32);
 #[derive(Resource)]
 pub struct RandomGen(pub ChaCha8Rng);
 
-// last displacement given by a controller (mouse, file, networks etc...)
-#[derive(Resource)]
-pub struct LastCmdDisplacement
-{
-    pub dx: f32,
-    pub dy: f32
-}
 
 #[derive(Resource)]
 pub struct LogFile(pub File);

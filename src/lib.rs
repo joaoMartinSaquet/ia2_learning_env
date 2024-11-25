@@ -5,11 +5,22 @@ pub mod trajectory_basics;
 pub mod score_basics;
 
 
-use bevy::ecs::schedule;
+
+pub mod target_selection;
+pub mod menu;
+pub mod control;
+
+
+
+use menu::menu::*;
+use target_selection::target::*;
+use control::control::*;
+
+
+// use bevy::ecs::schedule;
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 use systems::communication::initialize_pub_sub_connection;
-use systems::state_handling::controller_choice;
 use zeromq::PubSocket;
 use std::{fs::File, io::Write};
 use chrono::{self, Datelike, Timelike}; 
@@ -17,13 +28,11 @@ use chrono::{self, Datelike, Timelike};
 // zeromq
 use zeromq::*;
 
-use ressources::env_ressources::{CumScore, EpisodeTimer, LastCmdDisplacement, 
+use ressources::env_ressources::{CumScore, EpisodeTimer, 
     LogFile, MoveTimer, RandomGen, DirDrawed, DirTimer};
-use ressources::input_ressources::FileInput;
 use ressources::socket_ressources::*;
-use systems::{env_systems::*, state_handling::*, communication::*, read_input::*, player::*};
+use systems::{env_systems::*, state_handling::*, communication::*, player::*};
 use bevy::prelude::*;
-
 
 
 // dt of the move timer every 0.05 seconds
@@ -44,7 +53,7 @@ const UPDT : f64 = 0.008; // old 0.008
 
 const HEADER_LOG_FILE : &str = "Bx;By;Px;Py;Mdx;Mdy;Score;Time;\n";
 
-
+// State used for the current running state
 #[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum RunningState {
     #[default]
@@ -54,6 +63,7 @@ pub enum RunningState {
     Paused,
 }
 
+// State used for the current controller
 #[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum ControllerState {
     #[default]
@@ -62,6 +72,8 @@ pub enum ControllerState {
     Sub,
 }
 
+
+// State used for the current network connection
 #[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum NetworkState {
     #[default]
@@ -69,15 +81,42 @@ pub enum NetworkState {
     Connected,
 }
 
+// State used for the current running task 
 #[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum TaskState {
     #[default]
     Menu,
-    FollowBall,
+    FollowApple,
     TargetSelection,
 }
 
+// State used for the current menu screen
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+pub enum MenuState {
+    Main,
+    Settings,
+    SettingsDisplay,
+    SettingsSound,
+    #[default]
+    Disabled,
+}
 
+pub fn menu_plugin(app: &mut App) {
+    app
+        // At start, the menu is not enabled. This will be changed in `menu_setup` when
+        // entering the `GameState::Menu` state.
+        .init_state::<MenuState>()
+        .add_systems(OnEnter(TaskState::Menu), menu_setup)
+        // Systems to handle the main menu screen
+        .add_systems(OnEnter(MenuState::Main), main_menu_setup)
+        .add_systems(OnExit(TaskState::Menu), despawn_screen::<OnMainMenuScreen>)
+
+        // Common systems to all screens that handles buttons behavior
+        .add_systems(
+            Update,
+            (menu_action, button_system).run_if(in_state(TaskState::Menu)),
+        );
+}
 
 pub struct BounceBall;
 impl Plugin for BounceBall {
@@ -124,7 +163,7 @@ impl Plugin for LearningEnv
         let cmd_socket : SubSocket = zeromq::SubSocket::new();
 
 
-
+        app.add_plugins(menu_plugin);
         // add basic ressources
         app.insert_resource(ClearColor(Color::srgb(1.0, 1.0,1.0)))
            .insert_resource(Time::<Fixed>::from_seconds(UPDT))
@@ -151,7 +190,7 @@ impl Plugin for LearningEnv
         // add systems
         app
             // startup
-        //    .add_systems(Startup, setup_env_follow_apple.run_if(in_state(TaskState::FollowBall)))
+            .add_systems(Startup, setup_cam)
             // change running state
            .add_systems(Update, toggle_run_pause)
            // change the networking state
@@ -161,23 +200,28 @@ impl Plugin for LearningEnv
 
 
            // on running systems 
-           .add_systems(FixedUpdate, (run_trajectory).run_if(in_state(RunningState::Running)).run_if(in_state(TaskState::FollowBall)).before(score_metric).before(dumps_log))
+           .add_systems(FixedUpdate, (run_trajectory).run_if(in_state(RunningState::Running)).run_if(in_state(TaskState::FollowApple)).before(score_metric).before(dumps_log))
            .add_systems(FixedUpdate, (input_file_control).run_if(in_state(ControllerState::InputFile)).run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, (score_metric, dumps_log).chain().run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, run_episodes_timer.before(run_trajectory))
            .add_systems(Update, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)))
-           .add_systems(FixedUpdate, change_direction.run_if(in_state(RunningState::Running)).run_if(in_state(TaskState::FollowBall)))
+           .add_systems(FixedUpdate, change_direction.run_if(in_state(RunningState::Running)).run_if(in_state(TaskState::FollowApple)))
            .add_systems(FixedUpdate, publish_log.run_if(in_state(NetworkState::Connected)).run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, get_cmd_from_sub.run_if(in_state(NetworkState::Connected)).run_if(in_state(RunningState::Running)).run_if(in_state(ControllerState::Sub)).after(publish_log))
            .add_systems(FixedUpdate, move_player.run_if(in_state(RunningState::Running)).before(dumps_log))
-           .add_systems(Update, task_choice)
+           .add_systems(Update, get_to_menu.run_if(in_state(RunningState::Started)))
+
            // on state change systems
            .add_systems(OnEnter(RunningState::Ended), displays_cum_score)
            .add_systems(OnEnter(RunningState::Started), restart)
            .add_systems(OnEnter(ControllerState::InputFile), read_input_from_file)
            .add_systems(OnEnter(NetworkState::Connected), initialize_pub_sub_connection)
-           .add_systems(OnEnter(TaskState::FollowBall), setup_env_follow_apple)
-           .add_systems(OnEnter(TaskState::Menu), setup_env_follow_apple);
+           .add_systems(OnEnter(TaskState::FollowApple), setup_env_follow_apple)
+           .add_systems(OnEnter(TaskState::TargetSelection), setup_target)
+           .add_systems(OnExit(TaskState::FollowApple), despawn_screen::<OnGameScreen>)
+           .add_systems(OnExit(TaskState::TargetSelection), despawn_screen::<OnGameScreen>)
+           ;
+            // .add_systems(OnEnter(TaskState::Menu), setup_env_follow_apple);
            
     }
 }
