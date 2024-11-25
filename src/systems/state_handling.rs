@@ -3,7 +3,7 @@ use bevy::input::keyboard::{KeyboardInput, KeyCode};
 use bevy::prelude::{Res, ResMut, State, NextState, Time};
 use bevy::input::ButtonState;
 use crate::ressources::env_ressources::EpisodeTimer;
-use crate::{ControllerState, RunningState, NetworkState};
+use crate::{ControllerState, NetworkState, RunningState, TaskState};
 
 
 
@@ -102,4 +102,26 @@ pub fn networking_choice(mut keyboard_input_events: EventReader<KeyboardInput>,
             // println!("Changing network state #{:?} ----> #{:?} || event keycode : {:?}", state.get(), next_state, event.key_code);
         }
     }
+}
+
+pub fn task_choice(mut keyboard_input_events: EventReader<KeyboardInput>,
+    state: Res<State<TaskState>>,
+    mut next_state: ResMut<NextState<TaskState>>) {
+
+
+for event in keyboard_input_events.read() {
+if event.state == ButtonState::Pressed {
+
+match state.get() {
+    TaskState::Menu => match event.key_code {
+        KeyCode::Numpad1 => next_state.set(TaskState::FollowBall),
+        KeyCode::Numpad2 => next_state.set(TaskState::TargetSelection),
+        _ => next_state.set(TaskState::Menu),  
+    } 
+    TaskState::FollowBall => if event.key_code == KeyCode::Numpad2 {next_state.set(TaskState::TargetSelection);}
+    TaskState::TargetSelection => if event.key_code == KeyCode::Numpad1  {next_state.set(TaskState::FollowBall);}
+}
+// println!("Changing network state #{:?} ----> #{:?} || event keycode : {:?}", state.get(), next_state, event.key_code);
+}
+}
 }

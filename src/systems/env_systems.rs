@@ -107,7 +107,7 @@ pub fn command_desc_text(commands: &mut bevy::prelude::Commands, asset_server: R
         }));
 }
 
-pub fn setup_env(mut commands: bevy::prelude::Commands, 
+pub fn setup_env_follow_apple(mut commands: bevy::prelude::Commands, 
              asset_server: Res<AssetServer>,
              mut meshes: ResMut<Assets<Mesh>>,
              mut materials: ResMut<Assets<ColorMaterial>>,
@@ -447,3 +447,8 @@ pub fn change_direction(mut dir : ResMut<DirDrawed>,
     
 }
 
+pub fn despawn_objects(mut commands: Commands, query: Query<Entity, With<NameComponent>>) {
+    for entity in query.iter() {
+        commands.entity(entity).despawn();
+    }
+}

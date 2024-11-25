@@ -5,6 +5,7 @@ pub mod trajectory_basics;
 pub mod score_basics;
 
 
+use bevy::ecs::schedule;
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 use systems::communication::initialize_pub_sub_connection;
@@ -71,6 +72,7 @@ pub enum NetworkState {
 #[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum TaskState {
     #[default]
+    Menu,
     FollowBall,
     TargetSelection,
 }
@@ -94,8 +96,8 @@ impl Plugin for BounceBall {
 pub struct  LearningEnv;
 impl Plugin for LearningEnv
 {
+    
     fn build(&self, app: &mut App) {
-
         // genere a random distribution with a seed
         // let r: StdRng = StdRng::seed_from_u64();
         let r: ChaCha8Rng = ChaCha8Rng::seed_from_u64(SEED);
@@ -149,7 +151,7 @@ impl Plugin for LearningEnv
         // add systems
         app
             // startup
-           .add_systems(Startup, setup_env.run_if(in_state(TaskState::FollowBall)))
+        //    .add_systems(Startup, setup_env_follow_apple.run_if(in_state(TaskState::FollowBall)))
             // change running state
            .add_systems(Update, toggle_run_pause)
            // change the networking state
@@ -168,12 +170,15 @@ impl Plugin for LearningEnv
            .add_systems(FixedUpdate, publish_log.run_if(in_state(NetworkState::Connected)).run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, get_cmd_from_sub.run_if(in_state(NetworkState::Connected)).run_if(in_state(RunningState::Running)).run_if(in_state(ControllerState::Sub)).after(publish_log))
            .add_systems(FixedUpdate, move_player.run_if(in_state(RunningState::Running)).before(dumps_log))
-
+           .add_systems(Update, task_choice)
            // on state change systems
            .add_systems(OnEnter(RunningState::Ended), displays_cum_score)
            .add_systems(OnEnter(RunningState::Started), restart)
            .add_systems(OnEnter(ControllerState::InputFile), read_input_from_file)
-           .add_systems(OnEnter(NetworkState::Connected), initialize_pub_sub_connection);
+           .add_systems(OnEnter(NetworkState::Connected), initialize_pub_sub_connection)
+           .add_systems(OnEnter(TaskState::FollowBall), setup_env_follow_apple)
+           .add_systems(OnEnter(TaskState::Menu), setup_env_follow_apple);
+           
     }
 }
 
