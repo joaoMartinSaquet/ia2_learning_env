@@ -1,4 +1,3 @@
-pub mod systems;
 
 
 pub mod score_basics;
@@ -20,14 +19,12 @@ use crate::follow_apple::follow_apple::*;
 // use bevy::ecs::schedule;
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
-use systems::communication::initialize_pub_sub_connection;
 use zeromq::PubSocket;
 use std::{fs::File, io::Write};
 use chrono::{self, Datelike, Timelike}; 
 
 // zeromq
 use zeromq::*;
-use systems::{state_handling::*, communication::*, player::*};
 use bevy::prelude::*;
 
 

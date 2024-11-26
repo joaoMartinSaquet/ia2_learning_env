@@ -6,8 +6,22 @@ use bevy::color::palettes::basic::{RED, BLACK};
 
 use std::fs::*;
 use std::io::Read;
-use zeromq::{PubSocket, SubSocket};
+use zeromq::{PubSocket, SubSocket, Socket, SocketSend, ZmqMessage};
 use rand_chacha::ChaCha8Rng;
+use core::str;
+use bevy::prelude::{Query, Res, ResMut, Transform};
+use bevy::input::keyboard::*;
+use bevy::input::ButtonState;
+use crate::*;
+
+
+
+const SERVER : &str = "tcp://127.0.0.1";   
+const LOG_PORT : &str = "5556";
+const CMD_PORT : &str = "5560";
+
+const LOG_TOPIC : &str = "GameData/";
+const CMD_TOPIC : &str = "";
 
 
 const BALL_RADIUS : f32 = 10.0;
@@ -182,7 +196,6 @@ pub fn setup_bouncing_ball(mut commands: bevy::prelude::Commands,
     command_desc_text(&mut commands, asset_server);
 }
 
-
 pub fn setup_cam(mut commands: Commands, asset_server: Res<AssetServer>,) {
     commands.spawn(Camera2dBundle::default());
     commands.spawn((SpriteBundle {
@@ -203,3 +216,141 @@ pub fn read_input_from_file(mut file_input : ResMut<FileInput>)
     v.remove(0);
     file_input.0 = v;
 }
+
+pub fn toggle_run_pause(mut keyboard_input_events: EventReader<KeyboardInput>,
+    state: Res<State<RunningState>>,
+    mut next_state: ResMut<NextState<RunningState>>) {
+
+
+    for event in keyboard_input_events.read() {
+        if event.state == ButtonState::Pressed {
+            // println!("state {:?}", state.get());
+            // println!("{:?}", event);
+            if event.key_code == KeyCode::KeyS {
+                match state.get() {
+                    RunningState::Running => next_state.set(RunningState::Paused),
+                    RunningState::Paused => next_state.set(RunningState::Running),  
+                    RunningState::Started => next_state.set(RunningState::Running),        
+                    _ => ()
+                }
+            }
+            // println!("restart condition {:?} ",event.key_code == KeyCode::KeyR && *state.get() == RunningState::Ended);
+            if event.key_code == KeyCode::KeyR && *state.get() == RunningState::Ended {
+                println!("changing state ");
+                next_state.set(RunningState::Started);
+            }
+            else if event.key_code == KeyCode::KeyE && *state.get() == RunningState::Paused {
+                next_state.set(RunningState::Ended);
+            }
+        }
+    }
+}
+
+pub fn run_episodes_timer(state: Res<State<RunningState>>,
+    mut next_state: ResMut<NextState<RunningState>>,
+    time: Res<Time>,
+    mut episode_timer : ResMut<EpisodeTimer>)
+{
+    // this function is decreasing the timer when the game is running and handle the time change
+
+    if *state.get() == RunningState::Running { 
+        // println!("episode timer {:?}", episode_timer.0);
+        episode_timer.0.tick(time.delta());
+    }
+
+    if episode_timer.0.just_finished() && *state.get() == RunningState::Running {
+        next_state.set(RunningState::Ended);
+    }
+}
+
+pub fn networking_choice(
+    mut keyboard_input_events: EventReader<KeyboardInput>,
+    state: Res<State<NetworkState>>,
+    mut next_state: ResMut<NextState<NetworkState>>,
+) {
+    for event in keyboard_input_events.read() {
+        if event.state == ButtonState::Pressed {
+            match state.get() {
+                NetworkState::Unconnected => {
+                    if event.key_code == KeyCode::KeyN {
+                        next_state.set(NetworkState::Connected);
+                    }
+                }
+                NetworkState::Connected => {
+                    if event.key_code == KeyCode::KeyN {
+                        next_state.set(NetworkState::Unconnected);
+                    }
+                }
+            }
+            // println!("Changing network state #{:?} ----> #{:?} || event keycode : {:?}", state.get(), next_state, event.key_code);
+        }
+    }
+}
+
+#[tokio::main]
+pub async  fn initialize_pub_sub_connection(mut pub_socket : ResMut<PubSocketRessource>,
+                                            mut sub_socket : ResMut<SubSocketRessource>)
+{   
+    let pub_server = SERVER.to_owned() + ":" + LOG_PORT;
+    let sub_server = SERVER.to_owned() + ":" + CMD_PORT;
+    // ingoring error because System doesn't handle error 
+    let _ = pub_socket.0.bind(&pub_server).await;
+    println!("publisher Socket binded to {}", pub_server);
+
+    let _ = sub_socket.0.bind(&sub_server).await;
+    let _ = sub_socket.0.subscribe(CMD_TOPIC).await;
+    println!("sublisher Socket connected to {}", sub_server);
+
+}
+
+#[tokio::main]
+pub async fn publish_log(query: Query<(&Transform, &NameComponent)>, 
+                         cum_score : Res<CumScore>, 
+                         episode_timer : Res<EpisodeTimer>,
+                         mouse_d : Res<LastCmdDisplacement>,
+                         mut pub_socket : ResMut<PubSocketRessource>)
+{
+    let mut player_pose_x = 0.0;
+    let mut player_pose_y = 0.0;
+    let mut ball_pose_x = 0.0;
+    let mut ball_pose_y = 0.0;
+    let mouse_dx = mouse_d.dx;
+    let mouse_dy = mouse_d.dy;
+    let score = cum_score.0;
+    let time = episode_timer.0.elapsed().as_secs_f32();
+
+
+    for (transform, name) in query.iter()
+    {
+        if name.0 == "player".to_string()
+        {   
+            player_pose_x = transform.translation.x;
+            player_pose_y = transform.translation.y;
+        }
+        if name.0 == "follow object".to_string()
+        {   
+            ball_pose_x = transform.translation.x;
+            ball_pose_y = transform.translation.y;
+        }
+    }
+
+    let mut m: ZmqMessage = ZmqMessage::from(LOG_TOPIC);
+    if !episode_timer.0.finished()
+    {
+        let log_str = format!("bx : {:.2}; by : {:.2}; px : {:.2}; py : {:.2}; mdx : {:.2}; mdy : {:.2}; score : {:.2}; t : {:.2};", 
+        ball_pose_x, ball_pose_y, player_pose_x, player_pose_y, mouse_dx, mouse_dy, score, time);
+        m.push_back(log_str.as_bytes().to_vec().into());
+        
+        // println!("send message {:?}", m);
+        // ignore if there is a problem
+        let e = pub_socket.0.send(m).await;
+
+        if e .is_err()
+        {
+            println!("Error while sending message");
+        }
+    }
+}
+
+
+
