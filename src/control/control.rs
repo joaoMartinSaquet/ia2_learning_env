@@ -9,6 +9,16 @@ use regex::Regex;
 use crate::env_common::common::*;
 use crate::*;
 
+/// COORDINATE SYSTEM of the Mouse
+// Origin (0, 0)
+//    ●────────── x-axis
+//    |
+//    |
+//    |
+//    ↓
+// y-axis
+const DY_FACTOR : f32 = -1.0;
+
 // last displacement given by a controller (mouse, file, networks etc...)
 #[derive(Resource)]
 pub struct LastCmdDisplacement
@@ -17,7 +27,7 @@ pub struct LastCmdDisplacement
     pub dy: f32
 }
 
-/// This system prints out all keyboard events as they come in
+
 pub fn mouse_control(mut mouse_motion: EventReader<MouseMotion>,
     mut last_mouse_movement : ResMut<LastCmdDisplacement>)
 {   
@@ -31,7 +41,7 @@ dy = ev.delta.y;
 
 }
 last_mouse_movement.dx = dx;
-last_mouse_movement.dy = dy;    
+last_mouse_movement.dy = DY_FACTOR*dy;    
 // write_to_file_for_now(&mut query); TODO
 }
 
