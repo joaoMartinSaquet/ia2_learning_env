@@ -141,7 +141,7 @@ impl Plugin for LearningEnv
         // plugins 
         app.add_plugins(FollowApplePlugin);
         app.add_plugins(menu_plugin);
-
+        app.add_plugins(TargetSelectionPlugin);
 
         // add basic ressources
         app.insert_resource(ClearColor(Color::srgb(1.0, 1.0,1.0)))
@@ -189,7 +189,6 @@ impl Plugin for LearningEnv
            .add_systems(OnEnter(RunningState::Ended), displays_cum_score)
            .add_systems(OnEnter(ControllerState::InputFile), read_input_from_file)
            .add_systems(OnEnter(NetworkState::Connected), initialize_pub_sub_connection)
-           .add_systems(OnEnter(TaskState::TargetSelection), setup_target)
            .add_systems(OnExit(TaskState::FollowApple), despawn_screen::<OnGameScreen>)
            .add_systems(OnExit(TaskState::TargetSelection), despawn_screen::<OnGameScreen>)
            ;

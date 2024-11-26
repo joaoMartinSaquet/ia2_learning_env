@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 use crate::menu::menu::OnGameScreen;
+use crate::control::control::LastCmdDisplacement;
+use crate::TaskState;
 // use bevy::prelude::Color::rgb;
 
 #[derive(Component)]
@@ -13,6 +15,16 @@ pub struct Target;
 const TARGET_RADIUS_INIT : f32 = 100.0;
 // const target_color : Color = Color::Srgba(0.636, 0.968, 0.596);
 const TARGET_COLOR : Color=  Color::srgba(0.636, 0.968, 0.596, 0.3);
+
+
+pub struct TargetSelectionPlugin;
+impl Plugin for TargetSelectionPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(OnEnter(TaskState::TargetSelection), setup_target);
+    }
+}
+
+
 
 pub fn setup_target(mut commands: bevy::prelude::Commands, 
     asset_server: Res<AssetServer>,
@@ -49,6 +61,19 @@ pub fn setup_target(mut commands: bevy::prelude::Commands,
         Player,
         OnGameScreen )
     );
+
+
+}
+
+fn move_entity(mut query: Query<(&mut Transform, &Player)>,
+               cmd :Res<LastCmdDisplacement>)
+{
+    let mut player_transformation  = query.single_mut().0;
+    
+    // player.0.translation.x += cmd.dx;
+    player_transformation.translation.x += cmd.dx;
+    player_transformation.translation.y += cmd.dy;
+    
 
 
 }
