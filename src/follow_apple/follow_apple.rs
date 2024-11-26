@@ -23,7 +23,8 @@ impl Plugin for FollowApplePlugin {
            .add_systems(FixedUpdate, (run_trajectory).run_if(in_state(RunningState::Running)).run_if(in_state(TaskState::FollowApple)).before(score_metric).before(dumps_log))
            .add_systems(FixedUpdate, change_direction.run_if(in_state(RunningState::Running)).run_if(in_state(TaskState::FollowApple)))
            .add_systems(FixedUpdate, move_player.run_if(in_state(RunningState::Running)).before(dumps_log))
-           
+           .add_systems(FixedUpdate, (score_metric, set_log_string).chain().run_if(in_state(RunningState::Running)).run_if(in_state(TaskState::FollowApple)))
+
            
            .add_systems(OnEnter(TaskState::FollowApple), setup_env_follow_apple)
            .add_systems(OnEnter(RunningState::Started), restart)
@@ -31,7 +32,7 @@ impl Plugin for FollowApplePlugin {
     }
 }
 
-pub fn setup_env_follow_apple(mut commands: bevy::prelude::Commands, 
+fn setup_env_follow_apple(mut commands: bevy::prelude::Commands, 
     asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -104,7 +105,7 @@ command_desc_text(&mut commands, asset_server);
 
 }
 
-pub fn restart(mut query_transform : Query<(&mut Transform, &mut Velocity)>,
+fn restart(mut query_transform : Query<(&mut Transform, &mut Velocity)>,
                mut cumscore : ResMut<CumScore>, 
                mut episode_timer : ResMut<EpisodeTimer>,)
 {
@@ -121,13 +122,35 @@ pub fn restart(mut query_transform : Query<(&mut Transform, &mut Velocity)>,
     episode_timer.0.reset();
 }
 
-pub fn dumps_log(query: Query<(&Transform, &NameComponent)>, 
-                 cum_score : Res<CumScore>, 
-                 episode_timer : Res<EpisodeTimer>,
-                 last_cmd_d : Res<LastCmdDisplacement>,
-                 mut data_file : ResMut<LogFile>)
-{
 
+fn move_player(mut query: Query<(&mut Transform, &NameComponent)>,
+                   windows: Query<&Window>,
+                   last_cmd : Res<LastCmdDisplacement>)
+{
+    
+    let width = windows.single().width();
+    let dx = last_cmd.dx;
+    let _dy = last_cmd.dy;
+
+
+    for (mut transform, name) in query.iter_mut()
+    {
+        if name.0 == "player".to_string()
+        {   
+            let x_player = transform.translation.x;
+            let _y_player = transform.translation.y;
+
+            if f32::abs(x_player + dx) < width/2. {transform.translation.x += dx }
+        }
+    }
+}
+
+fn set_log_string(mut log_str : ResMut<LogStr>,
+                query: Query<(&Transform, &NameComponent)>, 
+                cum_score : Res<CumScore>, 
+                episode_timer : Res<EpisodeTimer>,
+                last_cmd_d : Res<LastCmdDisplacement>)
+{
     let mut player_pose_x = 0.0;
     let mut player_pose_y = 0.0;
     let mut ball_pose_x = 0.0;
@@ -152,33 +175,7 @@ pub fn dumps_log(query: Query<(&Transform, &NameComponent)>,
         }
     }
 
-    if !episode_timer.0.finished()
-    {
-        let log_str = format!("{:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2};\n", 
+    log_str.0 = format!("{:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2};\n", 
         ball_pose_x, ball_pose_y, player_pose_x, player_pose_y, cmd_dx, cmd_dy, score, time);
-        data_file.0.write(log_str.as_bytes()).expect("write failed");
-    }
 
-}
-
-pub fn move_player(mut query: Query<(&mut Transform, &NameComponent)>,
-                   windows: Query<&Window>,
-                   last_cmd : Res<LastCmdDisplacement>)
-{
-    
-    let width = windows.single().width();
-    let dx = last_cmd.dx;
-    let _dy = last_cmd.dy;
-
-
-    for (mut transform, name) in query.iter_mut()
-    {
-        if name.0 == "player".to_string()
-        {   
-            let x_player = transform.translation.x;
-            let _y_player = transform.translation.y;
-
-            if f32::abs(x_player + dx) < width/2. {transform.translation.x += dx }
-        }
-    }
 }

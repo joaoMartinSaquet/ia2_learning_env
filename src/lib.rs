@@ -153,8 +153,8 @@ impl Plugin for LearningEnv
            .insert_resource(LogFile(log_file))
            .insert_resource(FileInput(vec![]))
            .insert_resource(PubSocketRessource(log_socket))
-           .insert_resource(SubSocketRessource(cmd_socket));
-        
+           .insert_resource(SubSocketRessource(cmd_socket))
+           .insert_resource(LogStr("".to_string()));
 
         // initialize states 
         app
@@ -174,11 +174,10 @@ impl Plugin for LearningEnv
            .add_systems(Update, networking_choice.run_if(in_state(RunningState::Started)))
            // change the controller state
            .add_systems(Update, controller_choice.run_if(in_state(RunningState::Started)))
-
+           .add_systems(FixedUpdate, dumps_log)
 
            // on running systems 
            .add_systems(FixedUpdate, (input_file_control).run_if(in_state(ControllerState::InputFile)).run_if(in_state(RunningState::Running)))
-           .add_systems(FixedUpdate, (score_metric, dumps_log).chain().run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, run_episodes_timer.before(run_trajectory))
            .add_systems(Update, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, publish_log.run_if(in_state(NetworkState::Connected)).run_if(in_state(RunningState::Running)))

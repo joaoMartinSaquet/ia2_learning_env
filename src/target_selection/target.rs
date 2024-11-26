@@ -1,9 +1,9 @@
 use bevy::prelude::*;
-use bevy::sprite::{Material2d, MaterialMesh2dBundle};
+use bevy::sprite::MaterialMesh2dBundle;
 
 use crate::menu::menu::OnGameScreen;
 use crate::control::control::LastCmdDisplacement;
-use crate::{EpisodeTimer, RunningState, TaskState};
+use crate::{RunningState, TaskState};
 // use bevy::prelude::Color::rgb;
 
 #[derive(Component)]
@@ -17,7 +17,7 @@ const TARGET_RADIUS_INIT : f32 = 100.0;
 const TARGET_COLOR : Color=  Color::srgba(0.636, 0.968, 0.596, 0.3);
 
 // time the player stay inside the target
-const TIMER_TARGET_STAY : f32 = 1.;
+const TIMER_TARGET_STAY : f32 = 5.0;
 
 
 
@@ -136,5 +136,8 @@ pub fn is_player_in_target(query_player: Query<&Transform, With<Player>>,
             }
 
         }
-    }  
+    } else 
+    {
+        timer_target.0.reset();
+    }
 }

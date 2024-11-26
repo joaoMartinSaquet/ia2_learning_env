@@ -50,6 +50,9 @@ pub struct RandomGen(pub ChaCha8Rng);
 #[derive(Resource)]
 pub struct LogFile(pub File);
 
+#[derive(Resource)]
+pub struct LogStr(pub String);
+
 // Components
 // default component
 #[derive(Component)]
@@ -70,6 +73,8 @@ pub struct NameComponent(pub String);
 
 #[derive(Component)]
 pub struct TimeTracker(pub f32);
+
+
 
 pub fn move_ball(
     mut query: Query<(&mut Transform, &Velocity)>,
@@ -266,8 +271,7 @@ pub fn run_episodes_timer(state: Res<State<RunningState>>,
 pub fn networking_choice(
     mut keyboard_input_events: EventReader<KeyboardInput>,
     state: Res<State<NetworkState>>,
-    mut next_state: ResMut<NextState<NetworkState>>,
-) {
+    mut next_state: ResMut<NextState<NetworkState>>,) {
     for event in keyboard_input_events.read() {
         if event.state == ButtonState::Pressed {
             match state.get() {
@@ -304,53 +308,34 @@ pub async  fn initialize_pub_sub_connection(mut pub_socket : ResMut<PubSocketRes
 }
 
 #[tokio::main]
-pub async fn publish_log(query: Query<(&Transform, &NameComponent)>, 
-                         cum_score : Res<CumScore>, 
-                         episode_timer : Res<EpisodeTimer>,
-                         mouse_d : Res<LastCmdDisplacement>,
+pub async fn publish_log(log_str : Res<LogStr>,
                          mut pub_socket : ResMut<PubSocketRessource>)
 {
-    let mut player_pose_x = 0.0;
-    let mut player_pose_y = 0.0;
-    let mut ball_pose_x = 0.0;
-    let mut ball_pose_y = 0.0;
-    let mouse_dx = mouse_d.dx;
-    let mouse_dy = mouse_d.dy;
-    let score = cum_score.0;
-    let time = episode_timer.0.elapsed().as_secs_f32();
 
-
-    for (transform, name) in query.iter()
-    {
-        if name.0 == "player".to_string()
-        {   
-            player_pose_x = transform.translation.x;
-            player_pose_y = transform.translation.y;
-        }
-        if name.0 == "follow object".to_string()
-        {   
-            ball_pose_x = transform.translation.x;
-            ball_pose_y = transform.translation.y;
-        }
-    }
 
     let mut m: ZmqMessage = ZmqMessage::from(LOG_TOPIC);
-    if !episode_timer.0.finished()
-    {
-        let log_str = format!("bx : {:.2}; by : {:.2}; px : {:.2}; py : {:.2}; mdx : {:.2}; mdy : {:.2}; score : {:.2}; t : {:.2};", 
-        ball_pose_x, ball_pose_y, player_pose_x, player_pose_y, mouse_dx, mouse_dy, score, time);
-        m.push_back(log_str.as_bytes().to_vec().into());
-        
-        // println!("send message {:?}", m);
-        // ignore if there is a problem
-        let e = pub_socket.0.send(m).await;
+    m.push_back(log_str.0.as_bytes().to_vec().into());
 
-        if e .is_err()
-        {
-            println!("Error while sending message");
-        }
+    let e = pub_socket.0.send(m).await;
+
+    if e .is_err()
+    {
+        println!("Error while sending message");
     }
+    
 }
 
+pub fn dumps_log(log_str : Res<LogStr>,
+                 mut data_file : ResMut<LogFile>, 
+                 episode_timer : Res<EpisodeTimer>)
+{
+
+    if !episode_timer.0.finished()
+    {
+        
+        data_file.0.write(log_str.0.as_bytes()).expect("write failed");
+    }
+
+}
 
 
