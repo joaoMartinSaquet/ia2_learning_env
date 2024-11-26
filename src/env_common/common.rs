@@ -185,63 +185,6 @@ pub fn setup_bouncing_ball(mut commands: bevy::prelude::Commands,
     command_desc_text(&mut commands, asset_server);
 }
 
-pub fn restart(mut query_transform : Query<(&mut Transform, &mut Velocity)>,
-               mut cumscore : ResMut<CumScore>, 
-               mut episode_timer : ResMut<EpisodeTimer>,)
-{
-    
-    for (mut transform, mut vel) in query_transform.iter_mut()
-    {
-        transform.translation.x = 0.0;
-        // 1-D axis transform.translation.y = 0.0;
-        vel.dx = f32::abs(vel.dx);
-    }
-
-    // reset ressources
-    cumscore.0 = 0.0;
-    episode_timer.0.reset();
-}
-
-pub fn dumps_log(query: Query<(&Transform, &NameComponent)>, 
-                 cum_score : Res<CumScore>, 
-                 episode_timer : Res<EpisodeTimer>,
-                 last_cmd_d : Res<LastCmdDisplacement>,
-                 mut data_file : ResMut<LogFile>)
-{
-
-    let mut player_pose_x = 0.0;
-    let mut player_pose_y = 0.0;
-    let mut ball_pose_x = 0.0;
-    let mut ball_pose_y = 0.0;
-    let cmd_dx = last_cmd_d.dx;
-    let cmd_dy = last_cmd_d.dy;
-    let score = cum_score.0;
-    let time = episode_timer.0.elapsed().as_secs_f32();
-    // println!(" dumps log on time : {:?} ", time);
-    // get the player and ball pose 
-    for (transform, name) in query.iter()
-    {
-        if name.0 == "player".to_string()
-        {   
-            player_pose_x = transform.translation.x;
-            player_pose_y = transform.translation.y;
-        }
-        if name.0 == "follow object".to_string()
-        {   
-            ball_pose_x = transform.translation.x;
-            ball_pose_y = transform.translation.y;
-        }
-    }
-
-    if !episode_timer.0.finished()
-    {
-        let log_str = format!("{:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2};\n", 
-        ball_pose_x, ball_pose_y, player_pose_x, player_pose_y, cmd_dx, cmd_dy, score, time);
-        data_file.0.write(log_str.as_bytes()).expect("write failed");
-    }
-
-}
-
 
 pub fn despawn_objects(mut commands: Commands, query: Query<Entity, With<NameComponent>>) {
     for entity in query.iter() {
