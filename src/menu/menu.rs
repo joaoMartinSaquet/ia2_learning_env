@@ -39,6 +39,24 @@ pub struct SelectedOption;
 #[derive(Component)]
 pub struct OnGameScreen;
 
+
+pub fn menu_plugin(app: &mut App) {
+    app
+        // At start, the menu is not enabled. This will be changed in `menu_setup` when
+        // entering the `GameState::Menu` state.
+        .init_state::<MenuState>()
+        .add_systems(OnEnter(TaskState::Menu), menu_setup)
+        // Systems to handle the main menu screen
+        .add_systems(OnEnter(MenuState::Main), main_menu_setup)
+        .add_systems(OnExit(TaskState::Menu), despawn_screen::<OnMainMenuScreen>)
+
+        // Common systems to all screens that handles buttons behavior
+        .add_systems(
+            Update,
+            (menu_action, button_system).run_if(in_state(TaskState::Menu)),
+        );
+}
+
 // Generic system that takes a component as a parameter, and will despawn all entities with that component
 pub fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
     for entity in &to_despawn {

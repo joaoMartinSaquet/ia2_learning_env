@@ -97,23 +97,6 @@ pub enum MenuState {
     Disabled,
 }
 
-pub fn menu_plugin(app: &mut App) {
-    app
-        // At start, the menu is not enabled. This will be changed in `menu_setup` when
-        // entering the `GameState::Menu` state.
-        .init_state::<MenuState>()
-        .add_systems(OnEnter(TaskState::Menu), menu_setup)
-        // Systems to handle the main menu screen
-        .add_systems(OnEnter(MenuState::Main), main_menu_setup)
-        .add_systems(OnExit(TaskState::Menu), despawn_screen::<OnMainMenuScreen>)
-
-        // Common systems to all screens that handles buttons behavior
-        .add_systems(
-            Update,
-            (menu_action, button_system).run_if(in_state(TaskState::Menu)),
-        );
-}
-
 pub struct BounceBall;
 impl Plugin for BounceBall {
     fn build(&self, app: &mut App) {
@@ -158,16 +141,17 @@ impl Plugin for LearningEnv
         let log_socket : PubSocket = zeromq::PubSocket::new();
         let cmd_socket : SubSocket = zeromq::SubSocket::new();
 
-
+        // plugins 
+        app.add_plugins(FollowApplePlugin);
         app.add_plugins(menu_plugin);
+
+
         // add basic ressources
         app.insert_resource(ClearColor(Color::srgb(1.0, 1.0,1.0)))
            .insert_resource(Time::<Fixed>::from_seconds(UPDT))
            .insert_resource(EpisodeTimer(Timer::from_seconds(EPISODE_DURATION, TimerMode::Repeating)))
-           .insert_resource(DirTimer(Timer::from_seconds(0.8, TimerMode::Repeating)))
            .insert_resource(CumScore(0.0))
            .insert_resource(RandomGen(r))
-           .insert_resource(DirDrawed(false))
            .insert_resource(LastCmdDisplacement {dx: 0.0, dy: 0.0})
            .insert_resource(LogFile(log_file))
            .insert_resource(FileInput(vec![]))
@@ -196,23 +180,18 @@ impl Plugin for LearningEnv
 
 
            // on running systems 
-           .add_systems(FixedUpdate, (run_trajectory).run_if(in_state(RunningState::Running)).run_if(in_state(TaskState::FollowApple)).before(score_metric).before(dumps_log))
            .add_systems(FixedUpdate, (input_file_control).run_if(in_state(ControllerState::InputFile)).run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, (score_metric, dumps_log).chain().run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, run_episodes_timer.before(run_trajectory))
            .add_systems(Update, (mouse_control).run_if(in_state(ControllerState::Mouse)).run_if(in_state(RunningState::Running)))
-           .add_systems(FixedUpdate, change_direction.run_if(in_state(RunningState::Running)).run_if(in_state(TaskState::FollowApple)))
            .add_systems(FixedUpdate, publish_log.run_if(in_state(NetworkState::Connected)).run_if(in_state(RunningState::Running)))
            .add_systems(FixedUpdate, get_cmd_from_sub.run_if(in_state(NetworkState::Connected)).run_if(in_state(RunningState::Running)).run_if(in_state(ControllerState::Sub)).after(publish_log))
-           .add_systems(FixedUpdate, move_player.run_if(in_state(RunningState::Running)).before(dumps_log))
            .add_systems(Update, get_to_menu.run_if(in_state(RunningState::Started)))
 
            // on state change systems
            .add_systems(OnEnter(RunningState::Ended), displays_cum_score)
-           .add_systems(OnEnter(RunningState::Started), restart)
            .add_systems(OnEnter(ControllerState::InputFile), read_input_from_file)
            .add_systems(OnEnter(NetworkState::Connected), initialize_pub_sub_connection)
-           .add_systems(OnEnter(TaskState::FollowApple), setup_env_follow_apple)
            .add_systems(OnEnter(TaskState::TargetSelection), setup_target)
            .add_systems(OnExit(TaskState::FollowApple), despawn_screen::<OnGameScreen>)
            .add_systems(OnExit(TaskState::TargetSelection), despawn_screen::<OnGameScreen>)

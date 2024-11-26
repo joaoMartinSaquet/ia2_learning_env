@@ -4,14 +4,11 @@ use bevy::sprite::MaterialMesh2dBundle;
 use bevy::prelude::*;
 use bevy::color::palettes::basic::{RED, BLACK};
 
-use crate::score_basics::score::*;
 use std::fs::*;
-use std::io::{Read, Write};
+use std::io::Read;
 use zeromq::{PubSocket, SubSocket};
 use rand_chacha::ChaCha8Rng;
 
-
-use crate::control::control::*;
 
 const BALL_RADIUS : f32 = 10.0;
 const ELASTIC_COEF : f32 = 0.7;
@@ -185,12 +182,6 @@ pub fn setup_bouncing_ball(mut commands: bevy::prelude::Commands,
     command_desc_text(&mut commands, asset_server);
 }
 
-
-pub fn despawn_objects(mut commands: Commands, query: Query<Entity, With<NameComponent>>) {
-    for entity in query.iter() {
-        commands.entity(entity).despawn();
-    }
-}
 
 pub fn setup_cam(mut commands: Commands, asset_server: Res<AssetServer>,) {
     commands.spawn(Camera2dBundle::default());

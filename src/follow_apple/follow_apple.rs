@@ -4,13 +4,32 @@ use bevy::color::palettes::css::WHITE;
 use bevy::color::palettes::basic::RED;
 use std::io::Write;
 
-const BALL_RADIUS : f32 = 10.0;
-const INIT_VEL_FACTOR : f32 = 3.0;
-
 use crate::env_common::common::*;
 use crate::menu::menu::*;
 use crate::score_basics::score::*;
 use crate::control::control::*;
+use crate::*;
+
+
+const BALL_RADIUS : f32 = 10.0;
+const INIT_VEL_FACTOR : f32 = 3.0;
+
+pub struct FollowApplePlugin;
+impl Plugin for FollowApplePlugin {
+    fn build(&self, app: &mut App) {
+
+        app.insert_resource(DirTimer(Timer::from_seconds(0.8, TimerMode::Repeating)))
+           .insert_resource(DirDrawed(false))
+           .add_systems(FixedUpdate, (run_trajectory).run_if(in_state(RunningState::Running)).run_if(in_state(TaskState::FollowApple)).before(score_metric).before(dumps_log))
+           .add_systems(FixedUpdate, change_direction.run_if(in_state(RunningState::Running)).run_if(in_state(TaskState::FollowApple)))
+           .add_systems(FixedUpdate, move_player.run_if(in_state(RunningState::Running)).before(dumps_log))
+           
+           
+           .add_systems(OnEnter(TaskState::FollowApple), setup_env_follow_apple)
+           .add_systems(OnEnter(RunningState::Started), restart)
+        ;
+    }
+}
 
 pub fn setup_env_follow_apple(mut commands: bevy::prelude::Commands, 
     asset_server: Res<AssetServer>,
