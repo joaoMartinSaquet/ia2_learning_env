@@ -19,11 +19,11 @@ const TARGET_COLOR : Color=  Color::srgba(0.636, 0.968, 0.596, 0.3);
 const TARGET_MIN_RADIUS :f32 =  20.;
 
 // time the player stay inside the target
-const TIMER_TARGET_STAY : f32 = 2.0;
+const TIMER_TARGET_STAY : f32 = 1.0;
 
 
-const TARGET_X : [f32; 3]= [0.0, 300., -300.];
-const TARGET_Y : [f32; 3]= [0.0, 300., -300.];
+const TARGET_X : [f32; 6]= [0.0, 300., -300. , 0.0, 300., -300.];
+const TARGET_Y : [f32; 6]= [0.0, 300., -300., 300., -300., 300.];
 
 #[derive(Resource)]
 pub struct TargetRadius(f32);
@@ -160,7 +160,7 @@ pub fn is_player_in_target(query_player: Query<&Transform, With<Player>>,
 
             if target_radius.0 < TARGET_MIN_RADIUS
             {
-                target_num.0 = (target_num.0 + 1) % (TARGET_X.len() as i32 -1);
+                target_num.0 = (target_num.0 + 1) % (TARGET_X.len() as i32);
                 target_radius.0 = TARGET_RADIUS_INIT;
                 for mut target_trans  in query_target.iter_mut()
                 {
