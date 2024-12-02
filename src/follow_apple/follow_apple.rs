@@ -2,7 +2,6 @@ use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 use bevy::color::palettes::css::WHITE;
 use bevy::color::palettes::basic::RED;
-use std::io::Write;
 
 use crate::env_common::common::*;
 use crate::menu::menu::*;

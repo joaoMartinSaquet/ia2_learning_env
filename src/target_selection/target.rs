@@ -1,4 +1,3 @@
-use bevy::ecs::query;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 
@@ -149,7 +148,7 @@ pub fn is_player_in_target(query_player: Query<&Transform, With<Player>>,
     // println!("distance tp : {:?}, timer target time : {:?}, target_radius {:?}", dist_tp, time.elapsed(), target_radius.0);
 
     // Naive CumScore : 
-    cum_score.0 = f32::tanh(dist_tp);
+    cum_score.0 += f32::tanh(dist_tp);
     if dist_tp <= target_radius.0
     {
         timer_target.0.tick(time.delta());
