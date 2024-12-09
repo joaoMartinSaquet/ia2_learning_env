@@ -44,8 +44,6 @@ const SEED : u64 = 200;
 // most of the mouse are with a frequence of 125 Hz (0.008 s) or hte game freq ! must check that
 const UPDT : f64 = 0.008; // old 0.008
 
-const HEADER_LOG_FILE : &str = "Bx;By;Px;Py;Mdx;Mdy;Score;Time;\n";
-
 // State used for the current running state
 #[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum RunningState {
@@ -131,8 +129,7 @@ impl Plugin for LearningEnv
         );
         println!("date {:?}",formatted_date);
         let log_file_path = "logs/application".to_owned() + &formatted_date + ".log";
-        let mut log_file = File::create(log_file_path).unwrap();
-        log_file.write(HEADER_LOG_FILE.as_bytes()).unwrap();
+        let log_file = File::create(log_file_path).unwrap();
 
         // Publisher socket creation 
         let log_socket : PubSocket = zeromq::PubSocket::new();

@@ -12,6 +12,7 @@ use crate::*;
 
 const BALL_RADIUS : f32 = 10.0;
 const INIT_VEL_FACTOR : f32 = 3.0;
+const HEADER_LOG_FILE : &str = "Ax;Ay;Px;Py;Mdx;Mdy;Score;Time\n";
 
 pub struct FollowApplePlugin;
 impl Plugin for FollowApplePlugin {
@@ -24,8 +25,8 @@ impl Plugin for FollowApplePlugin {
            .add_systems(FixedUpdate, move_player.run_if(in_state(RunningState::Running)).before(dumps_log))
            .add_systems(FixedUpdate, (score_metric, set_log_string).chain().run_if(in_state(RunningState::Running)).run_if(in_state(TaskState::FollowApple)))
 
-           
-           .add_systems(OnEnter(TaskState::FollowApple), setup_env_follow_apple)
+
+           .add_systems(OnEnter(TaskState::FollowApple), (setup_env_follow_apple, write_log_header))
            .add_systems(OnEnter(RunningState::Started), restart)
         ;
     }
@@ -178,3 +179,23 @@ fn set_log_string(mut log_str : ResMut<LogStr>,
         ball_pose_x, ball_pose_y, player_pose_x, player_pose_y, cmd_dx, cmd_dy, score, time);
 
 }
+
+/// Write the header of the log file.
+///
+/// The header is a string that describes the columns of the log file.
+/// The columns are:
+/// - Tx: the x position of the target
+/// - Ty: the y position of the target
+/// - Trad: the radius of the target
+/// - Px: the x position of the player
+/// - Py: the y position of the player
+/// - Mdx: the x position of the last command
+/// - Mdy: the y position of the last command
+/// - Score: the cumulative score
+/// - Time: the time elapsed since the start of the game
+fn write_log_header(mut log_file : ResMut<LogFile>)
+{
+    log_file.0.write(HEADER_LOG_FILE.as_bytes()).unwrap();
+
+}
+

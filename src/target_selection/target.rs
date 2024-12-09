@@ -5,6 +5,8 @@ use crate::menu::menu::OnGameScreen;
 use crate::control::control::LastCmdDisplacement;
 use crate::{CumScore, RunningState, TaskState};
 use crate::env_common::common::*;
+use std::io::Write;
+
 
 #[derive(Component)]
 pub struct Player;
@@ -13,9 +15,10 @@ pub struct Player;
 pub struct Target;
 
 
-const TARGET_RADIUS_INIT : f32 = 100.0;
+
+const TARGET_RADIUS_INIT : f32 = 50.0;
 const TARGET_COLOR : Color=  Color::srgba(0.636, 0.968, 0.596, 0.3);
-const TARGET_MIN_RADIUS :f32 =  20.;
+const TARGET_MIN_RADIUS :f32 =  10.;
 
 // time the player stay inside the target
 const TIMER_TARGET_STAY : f32 = 1.0;
@@ -23,6 +26,7 @@ const TIMER_TARGET_STAY : f32 = 1.0;
 
 const TARGET_X : [f32; 6]= [0.0, 300., -300. , 0.0, 300., -300.];
 const TARGET_Y : [f32; 6]= [0.0, 300., -300., 300., -300., 300.];
+const HEADER_LOG_FILE : &str = "Tx;Ty;Trad;Px;Py;Mdx;Mdy;Score;Time\n";
 
 #[derive(Resource)]
 pub struct TargetRadius(f32);
@@ -41,8 +45,8 @@ impl Plugin for TargetSelectionPlugin {
         app.insert_resource(TargetRadius(TARGET_RADIUS_INIT))
            .insert_resource(TimerTarget(Timer::from_seconds(TIMER_TARGET_STAY, TimerMode::Repeating)))
            .insert_resource(TargetNum(0))
-           
-           .add_systems(OnEnter(TaskState::TargetSelection), setup_target)
+        
+           .add_systems(OnEnter(TaskState::TargetSelection), (setup_target, write_log_header))
            .add_systems(Update, (move_entity).run_if(in_state(RunningState::Running)).run_if(in_state(TaskState::TargetSelection)))
            .add_systems(FixedUpdate, (is_player_in_target, set_log_string).run_if(in_state(RunningState::Running)).run_if(in_state(TaskState::TargetSelection)));
     }
@@ -58,9 +62,9 @@ pub fn setup_target(mut commands: bevy::prelude::Commands,
     mut target_num : ResMut<TargetNum>)
 {
 
-    let window  = windows.single_mut();
-    let width = window.width();
-    let height = window.height();
+    let _window  = windows.single_mut();
+    // let width = window.width();
+    // let height = window.height();
 
     target_num.0 = 0;
 
@@ -179,9 +183,11 @@ pub fn is_player_in_target(query_player: Query<&Transform, With<Player>>,
         timer_target.0.reset();
     }
 }
+
 fn set_log_string(mut log_str : ResMut<LogStr>,
     query_player: Query<&Transform, With<Player>>, 
     query_target : Query<&Transform, With<Target>>,
+    target_radius : Res<TargetRadius>,
     cum_score : Res<CumScore>, 
     episode_timer : Res<EpisodeTimer>,
     last_cmd_d : Res<LastCmdDisplacement>)
@@ -210,6 +216,26 @@ fn set_log_string(mut log_str : ResMut<LogStr>,
         target_y = transform.translation.y;
     }
 
-    log_str.0 = format!("{:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2};\n", 
-        target_x, target_y, player_pose_x, player_pose_y, cmd_dx, cmd_dy, score, time);
+    log_str.0 = format!("{:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}; {:.2}, {:.2};\n", 
+        target_x, target_y, target_radius.0, player_pose_x, player_pose_y, cmd_dx, cmd_dy, score, time);
 }
+
+/// Write the header of the log file.
+///
+/// The header is a string that describes the columns of the log file.
+/// The columns are:
+/// - Tx: the x position of the target
+/// - Ty: the y position of the target
+/// - Trad: the radius of the target
+/// - Px: the x position of the player
+/// - Py: the y position of the player
+/// - Mdx: the x position of the last command
+/// - Mdy: the y position of the last command
+/// - Score: the cumulative score
+/// - Time: the time elapsed since the start of the game
+fn write_log_header(mut log_file : ResMut<LogFile>)
+{
+    log_file.0.write(HEADER_LOG_FILE.as_bytes()).unwrap();
+
+}
+
